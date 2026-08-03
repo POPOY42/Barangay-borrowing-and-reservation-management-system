@@ -7,28 +7,25 @@ const otpSchema = new mongoose.Schema(
             ref: "User",
             required: true,
         },
-
         otp: {
             type: String,
             required: true,
         },
-
         type: {
             type: String,
             enum: ["email_verification", "forgot_password"],
             required: true,
         },
-
         expiresAt: {
             type: Date,
             required: true,
-            expires: 0,
+            index: { expires: 0 },
         },
     },
-    {
-        timestamps: true,
-    }
+    { timestamps: true }
 );
+
+otpSchema.index({ user: 1, type: 1 });
 
 const Otp = mongoose.model("Otp", otpSchema);
 
