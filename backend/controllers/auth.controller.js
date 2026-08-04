@@ -4,7 +4,10 @@ import Otp from "../models/Otp.model.js";
 import sendEmail from "../services/email.service.js";
 import generateOTP from "../utils/generateOTP.js";
 
+import jwt from "jsonwebtoken";
+
 const register = async (req, res) => {
+    console.log("register hit")
     try {
         const {
             firstName,
@@ -36,7 +39,11 @@ const register = async (req, res) => {
                 type: "email_verification"
             });
 
+            let isResend = false;
+
             if (existingOtp) {
+                isResend = true;
+
                 const cooldownMs = 5 * 60 * 1000;
                 const timeSinceCreated = Date.now() - existingOtp.createdAt.getTime();
 
@@ -72,15 +79,13 @@ const register = async (req, res) => {
                 `
             );
 
-            return res.status(200).json({
-                message: "A new verification code has been sent to your email."
+            return res.status(201).json({
+                message: isResend
+                    ? "A new verification code has been sent to your email."
+                    : "OTP has been sent to your email."
             });
         }
 
-
-        // DITO YUNG MGA BAGONG GAWA PALANG NA ACCOUNT =======================
-
-        
         const newUser = new User({
             firstName,
             middleName,
@@ -118,6 +123,8 @@ const register = async (req, res) => {
         });
 
     } catch (error) {
+
+        console.log(error)
         return res.status(500).json({
             message: error.message
         });
@@ -166,7 +173,7 @@ const verifyRegisterOTP = async (req, res) => {
             });
         }
 
-        if (otpRecord.otp !== otp.trim()) {
+        if (otpRecord.otp !== otp) {
             return res.status(400).json({
                 message: "Invalid OTP."
             });
@@ -188,7 +195,60 @@ const verifyRegisterOTP = async (req, res) => {
     }
 };
 
+const login = async (req, res) => {
+    try {
+        const { email, password } = req.body
+
+        if (!email || !password) {
+            return res.status(400).json({
+                message: "Email and password are required."
+            });
+        }
+
+        const user = await User.findOne({ email }).select("+password");
+
+        if (!user) {
+            return res.status(401).json({
+                message: "Invalid email or password"
+            })
+        }
+
+        const isMatch = await user.comparePassword(password);
+
+        if (!isMatch || !user.isVerified) {
+            return res.status(401).json({
+                message: "Invalid email or password."
+            });
+        }
+
+        const token = jwt.sign(
+            { id: user._id, role: user.role },
+            process.env.JWT_SECRET,
+            { expiresIn: "7d" }
+        )
+
+        return res.status(200).json({
+            message: "Login successful",
+            token,
+            user: {
+                id: user._id,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                email: user.email,
+                role: user.role,
+            }
+        });
+    }
+    catch (error) {
+        console.log(error)
+        return res.status(500).json({
+            message: error.message
+        });
+    }
+}
+
 export {
     register,
-    verifyRegisterOTP
+    verifyRegisterOTP,
+    login
 };
