@@ -6,8 +6,32 @@ import generateOTP from "../utils/generateOTP.js";
 
 import jwt from "jsonwebtoken";
 
+const sendVerificationOTP = async (user) => {
+    const otp = generateOTP();
+
+    await Otp.create({
+        user: user._id,
+        otp,
+        type: "email_verification",
+        expiresAt: new Date(Date.now() + 5 * 60 * 1000)
+    });
+
+    await sendEmail(
+        user.email,
+        "Email Verification",
+        `
+            <h2>Barangay San Rafael</h2>
+            <p>Borrowing and Reservation Management System</p>
+            <p>Your verification code is:</p>
+            <h1>${otp}</h1>
+            <p>This code will expire in <b>5 minutes</b>.</p>
+            <hr>
+            <p>If you did not request this, please ignore this email.</p>
+        `
+    );
+};
+
 const register = async (req, res) => {
-    console.log("register hit")
     try {
         const {
             firstName,
@@ -18,20 +42,40 @@ const register = async (req, res) => {
             confirmPassword
         } = req.body;
 
-        if (password !== confirmPassword) {
+        if (!email) {
             return res.status(400).json({
-                message: "Passwords do not match"
+                message: "Email is required."
             });
         }
 
         const existingUser = await User.findOne({ email });
 
         if (existingUser) {
-
             if (existingUser.isVerified) {
                 return res.status(409).json({
                     message: "Email is already registered."
                 });
+            }
+
+            const isFullRegistration =
+                firstName &&
+                lastName &&
+                password &&
+                confirmPassword;
+
+            if (isFullRegistration) {
+                if (password !== confirmPassword) {
+                    return res.status(400).json({
+                        message: "Passwords do not match."
+                    });
+                }
+
+                existingUser.firstName = firstName;
+                existingUser.middleName = middleName || "";
+                existingUser.lastName = lastName;
+                existingUser.password = password;
+
+                await existingUser.save();
             }
 
             const existingOtp = await Otp.findOne({
@@ -39,92 +83,76 @@ const register = async (req, res) => {
                 type: "email_verification"
             });
 
-            let isResend = false;
-
             if (existingOtp) {
-                isResend = true;
-
                 const cooldownMs = 5 * 60 * 1000;
-                const timeSinceCreated = Date.now() - existingOtp.createdAt.getTime();
+
+                const timeSinceCreated =
+                    Date.now() - existingOtp.createdAt.getTime();
 
                 if (timeSinceCreated < cooldownMs) {
-                    const secondsLeft = Math.ceil((cooldownMs - timeSinceCreated) / 1000);
+                    const secondsLeft = Math.ceil(
+                        (cooldownMs - timeSinceCreated) / 1000
+                    );
+
                     return res.status(429).json({
                         message: `Please wait ${secondsLeft} seconds before requesting a new OTP.`
                     });
                 }
 
-                await Otp.deleteOne({ _id: existingOtp._id });
+                await Otp.deleteOne({
+                    _id: existingOtp._id
+                });
+
+                await sendVerificationOTP(existingUser);
+
+                return res.status(200).json({
+                    message: "A new verification code has been sent to your email."
+                });
             }
 
-            const otp = generateOTP();
+            await sendVerificationOTP(existingUser);
 
-            await Otp.create({
-                user: existingUser._id,
-                otp,
-                type: "email_verification",
-                expiresAt: new Date(Date.now() + 5 * 60 * 1000)
+            return res.status(200).json({
+                message: "OTP has been sent to your email."
             });
+        }
 
-            await sendEmail(
-                existingUser.email,
-                "Email Verification",
-                `
-                    <h2>Welcome to Barangay Borrowing System</h2>
-                    <p>Your verification code is:</p>
-                    <h1>${otp}</h1>
-                    <p>This code will expire in <b>5 minutes</b>.</p>
-                    <hr>
-                    <p>If you did not request this, please ignore this email.</p>
-                `
-            );
+        if (
+            !firstName ||
+            !lastName ||
+            !password ||
+            !confirmPassword
+        ) {
+            return res.status(400).json({
+                message: "Please complete all required fields."
+            });
+        }
 
-            return res.status(201).json({
-                message: isResend
-                    ? "A new verification code has been sent to your email."
-                    : "OTP has been sent to your email."
+        if (password !== confirmPassword) {
+            return res.status(400).json({
+                message: "Passwords do not match."
             });
         }
 
         const newUser = new User({
             firstName,
-            middleName,
+            middleName: middleName || "",
             lastName,
             email,
-            password,
+            password
         });
 
         await newUser.save();
 
-        const otp = generateOTP();
-
-        await Otp.create({
-            user: newUser._id,
-            otp,
-            type: "email_verification",
-            expiresAt: new Date(Date.now() + 5 * 60 * 1000)
-        });
-
-        await sendEmail(
-            newUser.email,
-            "Email Verification",
-            `
-                <h2>Welcome to Barangay Borrowing System</h2>
-                <p>Your verification code is:</p>
-                <h1>${otp}</h1>
-                <p>This code will expire in <b>5 minutes</b>.</p>
-                <hr>
-                <p>If you did not request this, please ignore this email.</p>
-            `
-        );
+        await sendVerificationOTP(newUser);
 
         return res.status(201).json({
             message: "OTP has been sent to your email."
         });
 
     } catch (error) {
+        console.log(error);
 
-        console.log(error)
         return res.status(500).json({
             message: error.message
         });
@@ -167,7 +195,10 @@ const verifyRegisterOTP = async (req, res) => {
         }
 
         if (otpRecord.expiresAt < new Date()) {
-            await Otp.deleteOne({ _id: otpRecord._id });
+            await Otp.deleteOne({
+                _id: otpRecord._id
+            });
+
             return res.status(400).json({
                 message: "OTP has expired. Please request a new one."
             });
@@ -180,15 +211,20 @@ const verifyRegisterOTP = async (req, res) => {
         }
 
         user.isVerified = true;
+
         await user.save();
 
-        await Otp.deleteOne({ _id: otpRecord._id });
+        await Otp.deleteOne({
+            _id: otpRecord._id
+        });
 
         return res.status(200).json({
             message: "Email verified successfully. You can now log in."
         });
 
     } catch (error) {
+        console.log(error);
+
         return res.status(500).json({
             message: error.message
         });
@@ -197,7 +233,7 @@ const verifyRegisterOTP = async (req, res) => {
 
 const login = async (req, res) => {
     try {
-        const { email, password } = req.body
+        const { email, password } = req.body;
 
         if (!email || !password) {
             return res.status(400).json({
@@ -205,12 +241,13 @@ const login = async (req, res) => {
             });
         }
 
-        const user = await User.findOne({ email }).select("+password");
+        const user = await User.findOne({ email })
+            .select("+password");
 
         if (!user) {
             return res.status(401).json({
-                message: "Invalid email or password"
-            })
+                message: "Invalid email or password."
+            });
         }
 
         const isMatch = await user.comparePassword(password);
@@ -222,30 +259,36 @@ const login = async (req, res) => {
         }
 
         const token = jwt.sign(
-            { id: user._id, role: user.role },
+            {
+                id: user._id,
+                role: user.role
+            },
             process.env.JWT_SECRET,
-            { expiresIn: "7d" }
-        )
+            {
+                expiresIn: "7d"
+            }
+        );
 
         return res.status(200).json({
-            message: "Login successful",
+            message: "Login successful.",
             token,
             user: {
                 id: user._id,
                 firstName: user.firstName,
                 lastName: user.lastName,
                 email: user.email,
-                role: user.role,
+                role: user.role
             }
         });
-    }
-    catch (error) {
-        console.log(error)
+
+    } catch (error) {
+        console.log(error);
+
         return res.status(500).json({
             message: error.message
         });
     }
-}
+};  
 
 export {
     register,
