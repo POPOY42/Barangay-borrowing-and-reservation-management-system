@@ -1,5 +1,7 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 
+import ProtectedRoute from "../components/protectedRoute";
+
 import Register from "../pages/auth/Register";
 import VerifyOTP from "../pages/auth/VerifyOTP";
 import Login from "../pages/auth/Login";
@@ -12,7 +14,9 @@ const AppRoutes = () => {
         <Routes>
             <Route
                 path="/"
-                element={<Navigate to="/login" replace />}
+                element={
+                    <Navigate to="/login" replace />
+                }
             />
 
             <Route path="/register" element={<Register />} />
@@ -21,12 +25,20 @@ const AppRoutes = () => {
 
             <Route
                 path="/admin/dashboard"
-                element={<AdminDashboard />}
+                element={
+                    <ProtectedRoute allowedRole="admin">
+                        <AdminDashboard />
+                    </ProtectedRoute>
+                }
             />
 
             <Route
                 path="/resident/dashboard"
-                element={<ResidentDashboard />}
+                element={
+                    <ProtectedRoute allowedRole="resident">
+                        <ResidentDashboard />
+                    </ProtectedRoute>
+                }
             />
         </Routes>
     );
