@@ -151,8 +151,6 @@ const register = async (req, res) => {
         });
 
     } catch (error) {
-        console.log(error);
-
         return res.status(500).json({
             message: error.message
         });
@@ -223,8 +221,6 @@ const verifyRegisterOTP = async (req, res) => {
         });
 
     } catch (error) {
-        console.log(error);
-
         return res.status(500).json({
             message: error.message
         });
@@ -282,16 +278,189 @@ const login = async (req, res) => {
         });
 
     } catch (error) {
-        console.log(error);
-
         return res.status(500).json({
             message: error.message
         });
     }
 };  
 
+
+
+
+const forgotPassword = async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        if (!email) {
+            return res.status(400).json({
+                message: "Email is required."
+            });
+        }
+
+        const user = await User.findOne({ email });
+
+        if (!user) {
+            return res.status(404).json({
+                message: "Email does not exist."
+            });
+        }
+
+        const existingOtp = await Otp.findOne({
+            user: user._id,
+            type: "forgot_password"
+        });
+
+        if (existingOtp) {
+            const cooldownMs = 5 * 60 * 1000;
+
+            const timeSinceCreated =
+                Date.now() - existingOtp.createdAt.getTime();
+
+            if (timeSinceCreated < cooldownMs) {
+                const secondsLeft = Math.ceil(
+                    (cooldownMs - timeSinceCreated) / 1000
+                );
+
+                return res.status(429).json({
+                    message: `Please wait ${secondsLeft} seconds before requesting another code.`
+                });
+            }
+
+            await Otp.deleteOne({
+                _id: existingOtp._id
+            });
+        }
+
+        const otp = generateOTP();
+
+        await Otp.create({
+            user: user._id,
+            otp,
+            type: "forgot_password",
+            expiresAt: new Date(Date.now() + 5 * 60 * 1000)
+        });
+
+        await sendEmail(
+            user.email,
+            "Password Reset",
+            `
+                <h2>Barangay San Rafael</h2>
+                <p>Borrowing and Reservation Management System</p>
+
+                <p>Your password reset code is:</p>
+
+                <h1>${otp}</h1>
+
+                <p>
+                    This code will expire in
+                    <b>5 minutes</b>.
+                </p>
+
+                <hr>
+
+                <p>
+                    If you did not request a password reset,
+                    please ignore this email.
+                </p>
+            `
+        );
+
+        return res.status(200).json({
+            message: "Password reset code has been sent to your email."
+        });
+
+    } catch (error) {
+        return res.status(500).json({
+            message: error.message
+        });
+    }
+};
+
+
+const resetPassword = async (req, res) => {
+    try {
+        const {
+            email,
+            otp,
+            password,
+            confirmPassword
+        } = req.body;
+
+        if (!email || !otp || !password || !confirmPassword) {
+            return res.status(400).json({
+                message: "All fields are required."
+            });
+        }
+
+        if (password !== confirmPassword) {
+            return res.status(400).json({
+                message: "Passwords do not match."
+            });
+        }
+
+        if (password.length < 6) {
+            return res.status(400).json({
+                message: "Password must be at least 6 characters."
+            });
+        }
+
+        const user = await User.findOne({ email });
+
+        if (!user) {
+            return res.status(400).json({
+                message: "Invalid or expired reset request."
+            });
+        }
+
+        const otpRecord = await Otp.findOne({
+            user: user._id,
+            type: "forgot_password"
+        });
+
+        if (!otpRecord) {
+            return res.status(400).json({
+                message: "Reset code not found. Please request a new one."
+            });
+        }
+
+        if (otpRecord.expiresAt < new Date()) {
+            await Otp.deleteOne({
+                _id: otpRecord._id
+            });
+
+            return res.status(400).json({
+                message: "Reset code has expired. Please request a new one."
+            });
+        }
+
+        if (otpRecord.otp !== otp) {
+            return res.status(400).json({
+                message: "Invalid reset code."
+            });
+        }
+
+        user.password = password;
+
+        await user.save();
+
+        await Otp.deleteOne({
+            _id: otpRecord._id
+        });
+
+        return res.status(200).json({
+            message: "Password reset successfully. You can now log in."
+        });
+
+    } catch (error) {
+        return res.status(500).json({
+            message: error.message
+        });
+    }
+};
 export {
     register,
     verifyRegisterOTP,
-    login
+    login,
+    forgotPassword,
+    resetPassword
 };

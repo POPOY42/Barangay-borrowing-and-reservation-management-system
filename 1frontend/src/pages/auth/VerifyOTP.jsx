@@ -56,7 +56,7 @@ const VerifyOTP = () => {
 
             setTimeout(() => {
                 navigate("/login");
-            }, 1200);
+            }, 3000);
 
         } catch (error) {
             setError(

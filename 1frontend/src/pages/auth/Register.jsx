@@ -47,8 +47,7 @@ const Register = () => {
 
         try {
             setLoading(true);
-            const response = await api.post("/auth/register", formData);
-            console.log(response.data);
+            await api.post("/auth/register", formData);
             navigate("/verify-otp", {
                 state: {
                     email: formData.email,

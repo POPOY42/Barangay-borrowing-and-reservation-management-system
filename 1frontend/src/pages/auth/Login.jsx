@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../../services/api";
+import { useAuth } from "../../context/AuthContext";
 import "../../css/auth/login.css";
 
 const Login = () => {
     const navigate = useNavigate();
+    const { loginUser } = useAuth();
 
     const [formData, setFormData] = useState({
         email: "",
@@ -36,15 +38,15 @@ const Login = () => {
             setLoading(true);
             const response = await api.post("/auth/login", formData);
             const { token, user } = response.data;
-            localStorage.setItem("token", token);
-            localStorage.setItem("user", JSON.stringify(user));
+            loginUser(token, user);
 
-            if (user.role === "admin") {
-                navigate("/admin/dashboard");
-            } else {
-                navigate("/resident/dashboard");
-            }
-
+            setTimeout(() => {
+                if (user.role === "admin") {
+                    navigate("/admin/dashboard");
+                } else {
+                    navigate("/resident/dashboard");
+                }
+            }, 1200);
         } catch (error) {
             setError(
                 error.response?.data?.message ||
@@ -201,12 +203,9 @@ const Login = () => {
                                     Create an account
                                 </Link>
                             </p>
-
                         </form>
-
                     </div>
                 </div>
-
             </section>
         </main>
     );
