@@ -53,29 +53,19 @@ const AppRoutes = () => {
                     index
                     element={<Navigate to="dashboard" replace />}
                 />
+
+                
                 <Route path="dashboard" element={<AdminDashboard />} />
                 <Route path="borrowings/requests" element={<Borrowings />} />
                 <Route path="borrowings/history" element={<BorrowingHistory />} />
                 <Route path="reservations" element={<Reservations />} />
                 <Route path="equipment" element={<Equipment />} />
                 <Route path="equipment/add" element={<AddEquipment />} />
-                <Route
-                    path="equipment/categories"
-                    element={<EquipmentCategories />}
-                />
+                <Route path="equipment/categories" element={<EquipmentCategories />}/>
                 <Route path="residents" element={<Residents />} />
-                <Route
-                    path="reports/borrowings"
-                    element={<BorrowingReports />}
-                />
-                <Route
-                    path="reports/reservations"
-                    element={<ReservationReports />}
-                />
-                <Route
-                    path="reports/equipment"
-                    element={<EquipmentReports />}
-                />
+                <Route path="reports/borrowings" element={<BorrowingReports />}/>
+                <Route path="reports/reservations" element={<ReservationReports />}/>
+                <Route path="reports/equipment" element={<EquipmentReports />}/>
                 <Route path="announcements" element={<Announcements />} />
                 <Route path="settings" element={<Settings />} />
                 <Route path="profile" element={<Profile />} />
