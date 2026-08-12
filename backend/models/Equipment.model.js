@@ -24,18 +24,46 @@ const equipmentSchema = new mongoose.Schema(
             type: Number,
             required: true,
             min: 0,
+            validate: {
+                validator: Number.isInteger,
+                message: "Total quantity must be a whole number.",
+            },
         },
 
         availableQuantity: {
             type: Number,
             required: true,
             min: 0,
+            validate: [
+                {
+                    validator: Number.isInteger,
+                    message: "Available quantity must be a whole number.",
+                },
+                {
+                    validator: function (value) {
+                        return value ===
+                            this.totalQuantity - this.maintenanceQuantity;
+                    },
+                    message:
+                        "Available quantity must equal total quantity minus maintenance quantity.",
+                },
+            ],
+        },
+
+        maintenanceQuantity: {
+            type: Number,
+            default: 0,
+            min: 0,
+            validate: {
+                validator: Number.isInteger,
+                message: "Maintenance quantity must be a whole number.",
+            },
         },
 
         status: {
             type: String,
-            enum: ["available", "unavailable", "maintenance"],
-            default: "available",
+            enum: ["active", "inactive"],
+            default: "active",
         },
 
         image: {
@@ -47,6 +75,15 @@ const equipmentSchema = new mongoose.Schema(
         timestamps: true,
     }
 );
+
+equipmentSchema.pre("validate", function () {
+    if (this.maintenanceQuantity > this.totalQuantity) {
+        this.invalidate(
+            "maintenanceQuantity",
+            "Maintenance quantity cannot exceed total quantity."
+        );
+    }
+});
 
 const Equipment = mongoose.model("Equipment", equipmentSchema);
 
