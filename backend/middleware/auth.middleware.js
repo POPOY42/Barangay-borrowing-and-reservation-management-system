@@ -25,7 +25,7 @@ const authMiddleware = async (req, res, next) => {
                 message: "User not found. Unauthorized."
             });
         }
-
+        
         req.user = user;
         next();
 

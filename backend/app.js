@@ -3,6 +3,7 @@ import cors from "cors";
 
 import authRoutes from "./routes/auth.routes.js";
 import equipmentRoutes from "./routes/equipment.routes.js"
+import borrowingRoutes from "./routes/borrowing.routes.js"
 const app = express();
 
 app.use(cors());

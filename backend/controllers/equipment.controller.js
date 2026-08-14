@@ -293,9 +293,38 @@ const updateEquipment = async (req, res) => {
 };
 
 
+const deleteEquipment = async (req,res) => {
+
+    try {
+        const { id } = req.params;
+
+        const equipment = await Equipment.findById(id);
+
+        if(!equipment){
+            return res.status(404).json({
+                message: "Equipment not found"
+            })
+        }
+
+        await equipment.deleteOne();
+
+        return res.status(200).json({
+            message: "Equipment deleted successfully"
+        })
+
+    } 
+    catch (error) {
+        return res.status(500).json({
+            message: "Failed to delete equipment"
+        })
+    }
+
+}
+
 export {
     createEquipment,
     getAllEquipment,
     getEquipmentById,
-    updateEquipment
+    updateEquipment,
+    deleteEquipment
 }
