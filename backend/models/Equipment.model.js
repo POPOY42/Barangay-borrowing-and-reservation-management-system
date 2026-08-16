@@ -34,20 +34,11 @@ const equipmentSchema = new mongoose.Schema(
             type: Number,
             required: true,
             min: 0,
-            validate: [
+            validate: 
                 {
                     validator: Number.isInteger,
                     message: "Available quantity must be a whole number.",
-                },
-                {
-                    validator: function (value) {
-                        return value ===
-                            this.totalQuantity - this.maintenanceQuantity;
-                    },
-                    message:
-                        "Available quantity must equal total quantity minus maintenance quantity.",
-                },
-            ],
+                }
         },
 
         maintenanceQuantity: {

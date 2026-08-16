@@ -1,4 +1,7 @@
+import mongoose from "mongoose";
 import Equipment from "../models/Equipment.model.js";
+import Borrowing from "../models/Borrowing.model.js";
+
 
 const createEquipment = async (req, res) => {
     try {
@@ -35,7 +38,11 @@ const createEquipment = async (req, res) => {
             });
         }
 
-        if (totalQuantity === undefined || totalQuantity === null || totalQuantity === "") {
+        if (
+            totalQuantity === undefined ||
+            totalQuantity === null ||
+            totalQuantity === ""
+        ) {
             return res.status(400).json({
                 message: "Total quantity is required."
             });
@@ -49,33 +56,42 @@ const createEquipment = async (req, res) => {
             });
         }
 
-        if (status !== undefined && !["active", "inactive"].includes(status)) {
+        if (
+            status !== undefined &&
+            !["active", "inactive"].includes(status)
+        ) {
             return res.status(400).json({
                 message: "Status must be either active or inactive."
             });
         }
 
-        if (description !== undefined && typeof description !== "string") {
+        if (
+            description !== undefined &&
+            typeof description !== "string"
+        ) {
             return res.status(400).json({
                 message: "Description must be a valid text."
             });
         }
 
-        if (image !== undefined && typeof image !== "string") {
+        if (
+            image !== undefined &&
+            typeof image !== "string"
+        ) {
             return res.status(400).json({
                 message: "Image must be a valid URL or path."
             });
         }
 
         const equipment = await Equipment.create({
-            equipmentName,
-            category,
-            description,
+            equipmentName: equipmentName.trim(),
+            category: category.trim(),
+            description: description?.trim() || "",
             totalQuantity: quantity,
             availableQuantity: quantity,
             maintenanceQuantity: 0,
-            status,
-            image
+            status: status ?? "active",
+            image: image ?? ""
         });
 
         return res.status(201).json({
@@ -91,10 +107,10 @@ const createEquipment = async (req, res) => {
 };
 
 
-
 const getAllEquipment = async (req, res) => {
     try {
-        const equipment = await Equipment.find();
+        const equipment = await Equipment.find()
+            .sort({ createdAt: -1 });
 
         return res.status(200).json({
             message: "Equipment retrieved successfully.",
@@ -109,10 +125,15 @@ const getAllEquipment = async (req, res) => {
 };
 
 
-
 const getEquipmentById = async (req, res) => {
     try {
         const { id } = req.params;
+
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({
+                message: "Invalid equipment ID."
+            });
+        }
 
         const equipment = await Equipment.findById(id);
 
@@ -127,7 +148,7 @@ const getEquipmentById = async (req, res) => {
             equipment
         });
 
-    } catch {
+    } catch (error) {
         return res.status(500).json({
             message: "Failed to retrieve equipment."
         });
@@ -149,6 +170,12 @@ const updateEquipment = async (req, res) => {
             image
         } = req.body;
 
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({
+                message: "Invalid equipment ID."
+            });
+        }
+
         if (Object.hasOwn(req.body, "availableQuantity")) {
             return res.status(400).json({
                 message: "Available quantity is managed by the system."
@@ -165,7 +192,10 @@ const updateEquipment = async (req, res) => {
 
         if (
             equipmentName !== undefined &&
-            (typeof equipmentName !== "string" || !equipmentName.trim())
+            (
+                typeof equipmentName !== "string" ||
+                !equipmentName.trim()
+            )
         ) {
             return res.status(400).json({
                 message: "Equipment name must be a valid text."
@@ -174,14 +204,20 @@ const updateEquipment = async (req, res) => {
 
         if (
             category !== undefined &&
-            (typeof category !== "string" || !category.trim())
+            (
+                typeof category !== "string" ||
+                !category.trim()
+            )
         ) {
             return res.status(400).json({
                 message: "Category must be a valid text."
             });
         }
 
-        if (description !== undefined && typeof description !== "string") {
+        if (
+            description !== undefined &&
+            typeof description !== "string"
+        ) {
             return res.status(400).json({
                 message: "Description must be a valid text."
             });
@@ -200,7 +236,10 @@ const updateEquipment = async (req, res) => {
         let parsedTotalQuantity;
 
         if (totalQuantity !== undefined) {
-            if (totalQuantity === null || totalQuantity === "") {
+            if (
+                totalQuantity === null ||
+                totalQuantity === ""
+            ) {
                 return res.status(400).json({
                     message: "Total quantity cannot be empty."
                 });
@@ -208,7 +247,10 @@ const updateEquipment = async (req, res) => {
 
             parsedTotalQuantity = Number(totalQuantity);
 
-            if (!Number.isInteger(parsedTotalQuantity) || parsedTotalQuantity < 0) {
+            if (
+                !Number.isInteger(parsedTotalQuantity) ||
+                parsedTotalQuantity < 0
+            ) {
                 return res.status(400).json({
                     message: "Total quantity must be a valid whole number."
                 });
@@ -218,13 +260,17 @@ const updateEquipment = async (req, res) => {
         let parsedMaintenanceQuantity;
 
         if (maintenanceQuantity !== undefined) {
-            if (maintenanceQuantity === null || maintenanceQuantity === "") {
+            if (
+                maintenanceQuantity === null ||
+                maintenanceQuantity === ""
+            ) {
                 return res.status(400).json({
                     message: "Maintenance quantity cannot be empty."
                 });
             }
 
-            parsedMaintenanceQuantity = Number(maintenanceQuantity);
+            parsedMaintenanceQuantity =
+                Number(maintenanceQuantity);
 
             if (
                 !Number.isInteger(parsedMaintenanceQuantity) ||
@@ -236,38 +282,73 @@ const updateEquipment = async (req, res) => {
             }
         }
 
-        if (image !== undefined && typeof image !== "string") {
+        if (
+            image !== undefined &&
+            typeof image !== "string"
+        ) {
             return res.status(400).json({
                 message: "Image must be a valid URL or path."
             });
         }
 
-        const nextTotalQuantity =
-            parsedTotalQuantity ?? equipment.totalQuantity;
-        const nextMaintenanceQuantity =
-            parsedMaintenanceQuantity ?? equipment.maintenanceQuantity ?? 0;
+        const borrowedRecords = await Borrowing.find({
+            equipment: equipment._id,
+            status: "borrowed"
+        }).select("quantity");
 
-        if (nextMaintenanceQuantity > nextTotalQuantity) {
+        const borrowedQuantity = borrowedRecords.reduce(
+            (total, borrowing) => {
+                return total + borrowing.quantity;
+            },
+            0
+        );
+
+        const nextTotalQuantity =
+            parsedTotalQuantity ??
+            equipment.totalQuantity;
+
+        const nextMaintenanceQuantity =
+            parsedMaintenanceQuantity ??
+            equipment.maintenanceQuantity ??
+            0;
+
+        if (
+            nextMaintenanceQuantity + borrowedQuantity >
+            nextTotalQuantity
+        ) {
             return res.status(400).json({
-                message: "Total quantity cannot be lower than maintenance quantity."
+                message:
+                    "Total quantity cannot be lower than the combined borrowed and maintenance quantities."
             });
         }
 
-        equipment.totalQuantity = nextTotalQuantity;
-        equipment.maintenanceQuantity = nextMaintenanceQuantity;
+        const nextAvailableQuantity =
+            nextTotalQuantity -
+            nextMaintenanceQuantity -
+            borrowedQuantity;
+
+        equipment.totalQuantity =
+            nextTotalQuantity;
+
+        equipment.maintenanceQuantity =
+            nextMaintenanceQuantity;
+
         equipment.availableQuantity =
-            nextTotalQuantity - nextMaintenanceQuantity;
+            nextAvailableQuantity;
 
         if (equipmentName !== undefined) {
-            equipment.equipmentName = equipmentName;
+            equipment.equipmentName =
+                equipmentName.trim();
         }
 
         if (category !== undefined) {
-            equipment.category = category;
+            equipment.category =
+                category.trim();
         }
 
         if (description !== undefined) {
-            equipment.description = description;
+            equipment.description =
+                description.trim();
         }
 
         if (status !== undefined) {
@@ -285,7 +366,7 @@ const updateEquipment = async (req, res) => {
             equipment
         });
 
-    } catch {
+    } catch (error) {
         return res.status(500).json({
             message: "Failed to update equipment."
         });
@@ -293,33 +374,49 @@ const updateEquipment = async (req, res) => {
 };
 
 
-const deleteEquipment = async (req,res) => {
-
+const deleteEquipment = async (req, res) => {
     try {
         const { id } = req.params;
 
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({
+                message: "Invalid equipment ID."
+            });
+        }
+
         const equipment = await Equipment.findById(id);
 
-        if(!equipment){
+        if (!equipment) {
             return res.status(404).json({
-                message: "Equipment not found"
-            })
+                message: "Equipment not found."
+            });
+        }
+
+        const existingBorrowing =
+            await Borrowing.findOne({
+                equipment: equipment._id
+            });
+
+        if (existingBorrowing) {
+            return res.status(400).json({
+                message:
+                    "Equipment cannot be deleted because it already has borrowing records."
+            });
         }
 
         await equipment.deleteOne();
 
         return res.status(200).json({
-            message: "Equipment deleted successfully"
-        })
+            message: "Equipment deleted successfully."
+        });
 
-    } 
-    catch (error) {
+    } catch (error) {
         return res.status(500).json({
-            message: "Failed to delete equipment"
-        })
+            message: "Failed to delete equipment."
+        });
     }
+};
 
-}
 
 export {
     createEquipment,
@@ -327,4 +424,4 @@ export {
     getEquipmentById,
     updateEquipment,
     deleteEquipment
-}
+};

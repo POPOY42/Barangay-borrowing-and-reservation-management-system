@@ -37,7 +37,7 @@ const borrowingSchema = new mongoose.Schema(
         },
         status: {
             type: String,
-            enum: ["pending", "approved", "rejected", "borrowed", "returned"],
+            enum: ["pending", "approved", "rejected", "cancelled", "borrowed", "returned"],
             default: "pending"
         },
         actualReturnDate: {
