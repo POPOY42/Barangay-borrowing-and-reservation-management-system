@@ -1,28 +1,80 @@
-import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { createEquipment } from "../../../services/equipmentService";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import {
+    getEquipmentById,
+    updateEquipment,
+} from "../../../services/equipmentService";
 import "../../../css/admin/equipment.css";
 
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
 
-const AddEquipment = () => {
+const EditEquipment = () => {
+    const { id } = useParams();
     const navigate = useNavigate();
-    const submittingRef = useRef(false);
     const fileInputRef = useRef(null);
+    const submittingRef = useRef(false);
+    const requestControllerRef = useRef(null);
     const [formValues, setFormValues] = useState({
         equipmentName: "",
         category: "",
         description: "",
         totalQuantity: "",
+        maintenanceQuantity: "",
         status: "active",
     });
+    const [existingImage, setExistingImage] = useState("");
     const [image, setImage] = useState(null);
     const [imagePreview, setImagePreview] = useState("");
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState("");
     const [imageError, setImageError] = useState("");
-    const [success, setSuccess] = useState("");
+
+    const loadEquipment = useCallback(async () => {
+        requestControllerRef.current?.abort();
+
+        const controller = new AbortController();
+        requestControllerRef.current = controller;
+
+        setLoading(true);
+        setError("");
+
+        try {
+            const data = await getEquipmentById(id, controller.signal);
+            const equipment = data.equipment;
+
+            setFormValues({
+                equipmentName: equipment.equipmentName ?? "",
+                category: equipment.category ?? "",
+                description: equipment.description ?? "",
+                totalQuantity: String(equipment.totalQuantity ?? ""),
+                maintenanceQuantity: String(equipment.maintenanceQuantity ?? 0),
+                status: equipment.status ?? "active",
+            });
+            setExistingImage(equipment.image ?? "");
+        } catch (requestError) {
+            if (!controller.signal.aborted) {
+                setError(
+                    requestError.response?.data?.message ||
+                        "Unable to load equipment. Please try again."
+                );
+            }
+        } finally {
+            if (!controller.signal.aborted) {
+                setLoading(false);
+            }
+        }
+    }, [id]);
+
+    useEffect(() => {
+        const fetchTimer = window.setTimeout(loadEquipment, 0);
+
+        return () => {
+            window.clearTimeout(fetchTimer);
+            requestControllerRef.current?.abort();
+        };
+    }, [loadEquipment]);
 
     useEffect(() => {
         return () => {
@@ -34,7 +86,7 @@ const AddEquipment = () => {
 
     const validateImage = (file) => {
         if (!file) {
-            return "Equipment image is required.";
+            return "";
         }
 
         if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
@@ -57,14 +109,24 @@ const AddEquipment = () => {
             return "Category is required.";
         }
 
-        if (formValues.totalQuantity === "") {
-            return "Total quantity is required.";
+        const totalQuantity = Number(formValues.totalQuantity);
+
+        if (
+            formValues.totalQuantity === "" ||
+            !Number.isInteger(totalQuantity) ||
+            totalQuantity < 0
+        ) {
+            return "Total quantity must be a whole number that is 0 or greater.";
         }
 
-        const quantity = Number(formValues.totalQuantity);
+        const maintenanceQuantity = Number(formValues.maintenanceQuantity);
 
-        if (!Number.isInteger(quantity) || quantity < 0) {
-            return "Total quantity must be a whole number that is 0 or greater.";
+        if (
+            formValues.maintenanceQuantity === "" ||
+            !Number.isInteger(maintenanceQuantity) ||
+            maintenanceQuantity < 0
+        ) {
+            return "Maintenance quantity must be a whole number that is 0 or greater.";
         }
 
         if (!["active", "inactive"].includes(formValues.status)) {
@@ -89,7 +151,6 @@ const AddEquipment = () => {
 
         setError("");
         setImageError("");
-        setSuccess("");
 
         if (selectedImageError) {
             setImage(null);
@@ -100,7 +161,7 @@ const AddEquipment = () => {
         }
 
         setImage(file);
-        setImagePreview(URL.createObjectURL(file));
+        setImagePreview(file ? URL.createObjectURL(file) : "");
     };
 
     const handleRemoveImage = () => {
@@ -122,7 +183,6 @@ const AddEquipment = () => {
 
         setError("");
         setImageError("");
-        setSuccess("");
 
         const validationError = validateForm();
         const selectedImageError = validateImage(image);
@@ -141,39 +201,67 @@ const AddEquipment = () => {
         formData.append("category", formValues.category.trim());
         formData.append("description", formValues.description.trim());
         formData.append("totalQuantity", formValues.totalQuantity);
+        formData.append("maintenanceQuantity", formValues.maintenanceQuantity);
         formData.append("status", formValues.status);
-        formData.append("image", image);
+
+        if (image) {
+            formData.append("image", image);
+        }
 
         submittingRef.current = true;
-        setLoading(true);
+        setSubmitting(true);
 
         try {
-            const data = await createEquipment(formData);
-            setSuccess(data.message || "Equipment added successfully.");
+            await updateEquipment(id, formData);
             navigate("/admin/equipment");
         } catch (requestError) {
             setError(
                 requestError.response?.data?.message ||
-                    "Failed to add equipment. Please try again."
+                    "Failed to update equipment. Please try again."
             );
         } finally {
             submittingRef.current = false;
-            setLoading(false);
+            setSubmitting(false);
         }
     };
+
+    if (loading) {
+        return (
+            <section className="admin-page equipment-page equipment-form-page">
+                <div className="equipment-state" role="status">
+                    <span className="equipment-loader" aria-hidden="true" />
+                    <p>Loading equipment...</p>
+                </div>
+            </section>
+        );
+    }
+
+    if (error && !formValues.equipmentName) {
+        return (
+            <section className="admin-page equipment-page equipment-form-page">
+                <div className="equipment-state equipment-error" role="alert">
+                    <h2>Equipment could not be loaded</h2>
+                    <p>{error}</p>
+                    <button type="button" onClick={loadEquipment}>
+                        Retry
+                    </button>
+                </div>
+            </section>
+        );
+    }
 
     return (
         <section className="admin-page equipment-page equipment-form-page">
             <div className="equipment-form-heading">
                 <div>
-                    <h1>Add Equipment</h1>
-                    <p>Add new equipment to the barangay inventory.</p>
+                    <h1>Edit Equipment</h1>
+                    <p>Update inventory details or replace the equipment image.</p>
                 </div>
                 <button
                     type="button"
                     className="equipment-back-button"
                     onClick={() => navigate("/admin/equipment")}
-                    disabled={loading}
+                    disabled={submitting}
                 >
                     ← Back to Equipment
                 </button>
@@ -183,22 +271,12 @@ const AddEquipment = () => {
                 <form className="equipment-form-card" onSubmit={handleSubmit} noValidate>
                 <div className="equipment-form-title">
                     <h2>Equipment Information</h2>
-                    <p>Enter the equipment details and select an inventory image.</p>
+                    <p>Available quantity is calculated and managed by the system.</p>
                 </div>
 
                 {error && (
                     <div className="equipment-form-message equipment-error" role="alert">
                         {error}
-                    </div>
-                )}
-
-                {success && (
-                    <div
-                        className="equipment-form-message equipment-success"
-                        role="status"
-                        aria-live="polite"
-                    >
-                        {success}
                     </div>
                 )}
 
@@ -211,11 +289,9 @@ const AddEquipment = () => {
                             className="equipment-input"
                             id="equipmentName"
                             name="equipmentName"
-                            type="text"
-                            placeholder="e.g. Monoblock Chair"
                             value={formValues.equipmentName}
                             onChange={handleInputChange}
-                            disabled={loading}
+                            disabled={submitting}
                             required
                         />
                     </div>
@@ -228,11 +304,9 @@ const AddEquipment = () => {
                             className="equipment-input"
                             id="category"
                             name="category"
-                            type="text"
-                            placeholder="e.g. Furniture"
                             value={formValues.category}
                             onChange={handleInputChange}
-                            disabled={loading}
+                            disabled={submitting}
                             required
                         />
                     </div>
@@ -245,10 +319,9 @@ const AddEquipment = () => {
                             className="equipment-textarea"
                             id="description"
                             name="description"
-                            placeholder="Enter a short description of the equipment..."
                             value={formValues.description}
                             onChange={handleInputChange}
-                            disabled={loading}
+                            disabled={submitting}
                             rows="4"
                         />
                     </div>
@@ -264,15 +337,32 @@ const AddEquipment = () => {
                             type="number"
                             min="0"
                             step="1"
-                            placeholder="0"
                             value={formValues.totalQuantity}
                             onChange={handleInputChange}
-                            disabled={loading}
+                            disabled={submitting}
                             required
                         />
                     </div>
 
                     <div className="equipment-field">
+                        <label className="equipment-label" htmlFor="maintenanceQuantity">
+                            Maintenance Quantity <span aria-hidden="true">*</span>
+                        </label>
+                        <input
+                            className="equipment-input"
+                            id="maintenanceQuantity"
+                            name="maintenanceQuantity"
+                            type="number"
+                            min="0"
+                            step="1"
+                            value={formValues.maintenanceQuantity}
+                            onChange={handleInputChange}
+                            disabled={submitting}
+                            required
+                        />
+                    </div>
+
+                    <div className="equipment-field equipment-field-full">
                         <label className="equipment-label" htmlFor="status">
                             Status <span aria-hidden="true">*</span>
                         </label>
@@ -282,7 +372,7 @@ const AddEquipment = () => {
                             name="status"
                             value={formValues.status}
                             onChange={handleInputChange}
-                            disabled={loading}
+                            disabled={submitting}
                             required
                         >
                             <option value="active">Active</option>
@@ -291,21 +381,20 @@ const AddEquipment = () => {
                     </div>
 
                     <div className="equipment-field equipment-field-full">
-                        <label className="equipment-label" htmlFor="image">
-                            Equipment Image <span aria-hidden="true">*</span>
+                        <label className="equipment-label" htmlFor="editImage">
+                            Replacement Image
                         </label>
                         <div className="equipment-image-upload">
                             <input
                                 ref={fileInputRef}
-                                id="image"
+                                id="editImage"
                                 name="image"
                                 type="file"
                                 accept="image/jpeg,image/png,image/webp"
                                 onChange={handleImageChange}
-                                disabled={loading}
-                                required
+                                disabled={submitting}
                             />
-                            <p>JPG, PNG, or WEBP. Maximum file size: 5 MB.</p>
+                            <p>Optional. JPG, PNG, or WEBP up to 5 MB.</p>
                         </div>
 
                         {imageError && (
@@ -314,24 +403,27 @@ const AddEquipment = () => {
                             </p>
                         )}
 
-                        {image && imagePreview && (
+                        {image && imagePreview ? (
                             <div className="equipment-image-preview">
-                                <img
-                                    src={imagePreview}
-                                    alt={`Preview of ${formValues.equipmentName.trim() || "selected equipment"}`}
-                                />
+                                <img src={imagePreview} alt="New equipment preview" />
                                 <span>{image.name}</span>
                                 <button
                                     type="button"
                                     className="equipment-image-remove"
                                     aria-label={`Remove ${image.name}`}
-                                    title="Remove selected image"
                                     onClick={handleRemoveImage}
-                                    disabled={loading}
+                                    disabled={submitting}
                                 >
                                     ×
                                 </button>
                             </div>
+                        ) : (
+                            existingImage && (
+                                <div className="equipment-existing-image">
+                                    <img src={existingImage} alt="Current equipment" />
+                                    <span>Current image will be retained.</span>
+                                </div>
+                            )
                         )}
                     </div>
                 </div>
@@ -341,16 +433,16 @@ const AddEquipment = () => {
                         type="button"
                         className="equipment-cancel-btn"
                         onClick={() => navigate("/admin/equipment")}
-                        disabled={loading}
+                        disabled={submitting}
                     >
                         Cancel
                     </button>
                     <button
                         type="submit"
                         className="equipment-submit-btn"
-                        disabled={loading}
+                        disabled={submitting}
                     >
-                        {loading ? "Adding Equipment..." : "Add Equipment"}
+                        {submitting ? "Saving Changes..." : "Save Changes"}
                     </button>
                 </div>
                 </form>
@@ -359,4 +451,4 @@ const AddEquipment = () => {
     );
 };
 
-export default AddEquipment;
+export default EditEquipment;

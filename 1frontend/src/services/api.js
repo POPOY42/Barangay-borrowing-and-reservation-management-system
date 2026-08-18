@@ -3,9 +3,6 @@ import { clearAuthData } from "./auth";
 
 const api = axios.create({
     baseURL: import.meta.env.VITE_API_URL,
-    headers: {
-        "Content-Type": "application/json",
-    },
 });
 
 api.interceptors.request.use((config) => {
@@ -23,7 +20,7 @@ api.interceptors.response.use(
     (error) => {
         if (error.response?.status === 401) {
             clearAuthData();
-            
+
             if (window.location.pathname !== "/login") {
                 window.location.replace("/login");
             }

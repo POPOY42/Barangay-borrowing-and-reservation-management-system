@@ -63,11 +63,6 @@ const navigationItems = [
                 path: "/admin/equipment/add",
                 icon: FiPlusSquare,
             },
-            {
-                label: "Categories",
-                path: "/admin/equipment/categories",
-                icon: FiTag,
-            },
         ],
     },
     { label: "Residents", path: "/admin/residents", icon: FiUsers },

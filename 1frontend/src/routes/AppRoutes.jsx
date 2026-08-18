@@ -15,7 +15,7 @@ import BorrowingHistory from "../pages/admin/borrowings/BorrowingHistory";
 import Reservations from "../pages/admin/reservations/Reservations";
 import Equipment from "../pages/admin/equipment/Equipment";
 import AddEquipment from "../pages/admin/equipment/AddEquipment";
-import EquipmentCategories from "../pages/admin/equipment/EquipmentCategories";
+import EditEquipment from "../pages/admin/equipment/EditEquipment";
 import Residents from "../pages/admin/Residents";
 import BorrowingReports from "../pages/admin/reports/BorrowingReports";
 import ReservationReports from "../pages/admin/reports/ReservationReports";
@@ -61,7 +61,7 @@ const AppRoutes = () => {
                 <Route path="reservations" element={<Reservations />} />
                 <Route path="equipment" element={<Equipment />} />
                 <Route path="equipment/add" element={<AddEquipment />} />
-                <Route path="equipment/categories" element={<EquipmentCategories />}/>
+                <Route path="equipment/:id/edit" element={<EditEquipment />} />
                 <Route path="residents" element={<Residents />} />
                 <Route path="reports/borrowings" element={<BorrowingReports />}/>
                 <Route path="reports/reservations" element={<ReservationReports />}/>

@@ -1,7 +1,8 @@
 import mongoose from "mongoose";
 import Equipment from "../models/Equipment.model.js";
 import Borrowing from "../models/Borrowing.model.js";
-
+import cloudinary from "../config/cloudinary.js";
+import uploadToCloudinary from "../utils/uploadToCloudinary.js";
 
 const createEquipment = async (req, res) => {
     try {
@@ -10,8 +11,7 @@ const createEquipment = async (req, res) => {
             category,
             description,
             totalQuantity,
-            status,
-            image
+            status
         } = req.body;
 
         if (Object.hasOwn(req.body, "availableQuantity")) {
@@ -74,14 +74,15 @@ const createEquipment = async (req, res) => {
             });
         }
 
-        if (
-            image !== undefined &&
-            typeof image !== "string"
-        ) {
+        if (!req.file) {
             return res.status(400).json({
-                message: "Image must be a valid URL or path."
+                message: "Equipment image is required."
             });
         }
+
+        const uploadResult = await uploadToCloudinary(
+            req.file.buffer
+        );
 
         const equipment = await Equipment.create({
             equipmentName: equipmentName.trim(),
@@ -91,7 +92,8 @@ const createEquipment = async (req, res) => {
             availableQuantity: quantity,
             maintenanceQuantity: 0,
             status: status ?? "active",
-            image: image ?? ""
+            image: uploadResult.secure_url,
+            imagePublicId: uploadResult.public_id
         });
 
         return res.status(201).json({
@@ -109,12 +111,43 @@ const createEquipment = async (req, res) => {
 
 const getAllEquipment = async (req, res) => {
     try {
-        const equipment = await Equipment.find()
-            .sort({ createdAt: -1 });
+        const page = Number(req.query.page) || 1;
+        const limit = Number(req.query.limit) || 10;
+
+        if (!Number.isInteger(page) || page < 1) {
+            return res.status(400).json({
+                message: "Page must be a valid positive whole number."
+            });
+        }
+
+        if (!Number.isInteger(limit) || limit < 1 || limit > 100) {
+            return res.status(400).json({
+                message: "Limit must be between 1 and 100."
+            });
+        }
+
+        const skip = (page - 1) * limit;
+
+        const [equipment, totalItems] = await Promise.all([
+            Equipment.find()
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limit),
+
+            Equipment.countDocuments()
+        ]);
+
+        const totalPages = Math.ceil(totalItems / limit);
 
         return res.status(200).json({
             message: "Equipment retrieved successfully.",
-            equipment
+            equipment,
+            pagination: {
+                currentPage: page,
+                totalPages,
+                totalItems,
+                limit
+            }
         });
 
     } catch (error) {
@@ -123,7 +156,6 @@ const getAllEquipment = async (req, res) => {
         });
     }
 };
-
 
 const getEquipmentById = async (req, res) => {
     try {
@@ -134,7 +166,7 @@ const getEquipmentById = async (req, res) => {
                 message: "Invalid equipment ID."
             });
         }
-
+        
         const equipment = await Equipment.findById(id);
 
         if (!equipment) {
@@ -166,8 +198,7 @@ const updateEquipment = async (req, res) => {
             description,
             totalQuantity,
             maintenanceQuantity,
-            status,
-            image
+            status
         } = req.body;
 
         if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -179,6 +210,18 @@ const updateEquipment = async (req, res) => {
         if (Object.hasOwn(req.body, "availableQuantity")) {
             return res.status(400).json({
                 message: "Available quantity is managed by the system."
+            });
+        }
+
+        if (Object.hasOwn(req.body, "image")) {
+            return res.status(400).json({
+                message: "Equipment image must be uploaded as a file."
+            });
+        }
+
+        if (Object.hasOwn(req.body, "imagePublicId")) {
+            return res.status(400).json({
+                message: "Image public ID is managed by the system."
             });
         }
 
@@ -224,7 +267,10 @@ const updateEquipment = async (req, res) => {
         }
 
         if (status !== undefined) {
-            const validStatuses = ["active", "inactive"];
+            const validStatuses = [
+                "active",
+                "inactive"
+            ];
 
             if (!validStatuses.includes(status)) {
                 return res.status(400).json({
@@ -245,7 +291,8 @@ const updateEquipment = async (req, res) => {
                 });
             }
 
-            parsedTotalQuantity = Number(totalQuantity);
+            parsedTotalQuantity =
+                Number(totalQuantity);
 
             if (
                 !Number.isInteger(parsedTotalQuantity) ||
@@ -282,26 +329,18 @@ const updateEquipment = async (req, res) => {
             }
         }
 
-        if (
-            image !== undefined &&
-            typeof image !== "string"
-        ) {
-            return res.status(400).json({
-                message: "Image must be a valid URL or path."
-            });
-        }
-
         const borrowedRecords = await Borrowing.find({
             equipment: equipment._id,
             status: "borrowed"
         }).select("quantity");
 
-        const borrowedQuantity = borrowedRecords.reduce(
-            (total, borrowing) => {
-                return total + borrowing.quantity;
-            },
-            0
-        );
+        const borrowedQuantity =
+            borrowedRecords.reduce(
+                (total, borrowing) => {
+                    return total + borrowing.quantity;
+                },
+                0
+            );
 
         const nextTotalQuantity =
             parsedTotalQuantity ??
@@ -313,7 +352,8 @@ const updateEquipment = async (req, res) => {
             0;
 
         if (
-            nextMaintenanceQuantity + borrowedQuantity >
+            nextMaintenanceQuantity +
+            borrowedQuantity >
             nextTotalQuantity
         ) {
             return res.status(400).json({
@@ -326,6 +366,26 @@ const updateEquipment = async (req, res) => {
             nextTotalQuantity -
             nextMaintenanceQuantity -
             borrowedQuantity;
+
+        let newImageUrl = equipment.image;
+        let newImagePublicId =
+            equipment.imagePublicId;
+
+        const oldImagePublicId =
+            equipment.imagePublicId;
+
+        if (req.file) {
+            const uploadResult =
+                await uploadToCloudinary(
+                    req.file.buffer
+                );
+
+            newImageUrl =
+                uploadResult.secure_url;
+
+            newImagePublicId =
+                uploadResult.public_id;
+        }
 
         equipment.totalQuantity =
             nextTotalQuantity;
@@ -355,11 +415,29 @@ const updateEquipment = async (req, res) => {
             equipment.status = status;
         }
 
-        if (image !== undefined) {
-            equipment.image = image;
-        }
+        equipment.image = newImageUrl;
+        equipment.imagePublicId =
+            newImagePublicId;
 
         await equipment.save();
+
+        if (
+            req.file &&
+            oldImagePublicId &&
+            oldImagePublicId !==
+                newImagePublicId
+        ) {
+            try {
+                await cloudinary.uploader.destroy(
+                    oldImagePublicId
+                );
+            } catch (cloudinaryError) {
+                console.error(
+                    "Failed to delete old Cloudinary image:",
+                    cloudinaryError
+                );
+            }
+        }
 
         return res.status(200).json({
             message: "Equipment updated successfully.",
@@ -367,6 +445,8 @@ const updateEquipment = async (req, res) => {
         });
 
     } catch (error) {
+        console.error(error);
+
         return res.status(500).json({
             message: "Failed to update equipment."
         });
@@ -392,16 +472,21 @@ const deleteEquipment = async (req, res) => {
             });
         }
 
-        const existingBorrowing =
-            await Borrowing.findOne({
-                equipment: equipment._id
-            });
+        const existingBorrowing = await Borrowing.findOne({
+            equipment: equipment._id
+        });
 
         if (existingBorrowing) {
             return res.status(400).json({
                 message:
                     "Equipment cannot be deleted because it already has borrowing records."
             });
+        }
+
+        if (equipment.imagePublicId) {
+            await cloudinary.uploader.destroy(
+                equipment.imagePublicId
+            );
         }
 
         await equipment.deleteOne();
@@ -411,6 +496,8 @@ const deleteEquipment = async (req, res) => {
         });
 
     } catch (error) {
+        console.error(error);
+
         return res.status(500).json({
             message: "Failed to delete equipment."
         });
