@@ -80,6 +80,9 @@ equipmentSchema.pre("validate", function () {
     }
 });
 
+equipmentSchema.index({ status: 1, availableQuantity: 1 });
+equipmentSchema.index({ createdAt: -1 });
+
 const Equipment = mongoose.model("Equipment", equipmentSchema);
 
 export default Equipment;

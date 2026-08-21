@@ -1,7 +1,13 @@
 import api from "./api";
 
-const getAllEquipment = async (page = 1, signal) => {
-    const response = await api.get(`/equipment?page=${page}&limit=10`, {
+const getAllEquipment = async (page = 1, search = "", signal, borrowable = false) => {
+    const response = await api.get("/equipment", {
+        params: {
+            page,
+            limit: 10,
+            ...(search ? { search } : {}),
+            ...(borrowable ? { borrowable: true } : {}),
+        },
         signal,
     });
 

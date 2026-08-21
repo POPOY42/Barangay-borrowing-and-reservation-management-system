@@ -29,15 +29,25 @@ const UserSchema = new mongoose.Schema(
         phoneNumber: {
             type: String,
             trim: true,
-            match: [/^(09|\+639)\d{9}$/, "Please enter a valid PH phone number."],
+            default: "",
+            validate: {
+                validator: (value) => !value || /^(09|\+639)\d{9}$/.test(value),
+                message: "Please enter a valid PH phone number.",
+            },
+        },
+        birthday: {
+            type: Date,
+            default: null,
         },
         houseNumber: {
             type: String,
             trim: true,
+            default: "",
         },
         purok: {
             type: String,
             trim: true,
+            default: "",
         },
         password: {
             type: String,
@@ -50,13 +60,34 @@ const UserSchema = new mongoose.Schema(
             enum: ["admin", "resident"],
             default: "resident",
         },
+        accountStatus: {
+            type: String,
+            enum: ["active", "inactive"],
+            default: "active",
+        },
         isVerified: {
             type: Boolean,
             default: false,
         },
+        notificationPreferences: {
+            borrowingUpdates: {
+                type: Boolean,
+                default: true,
+            },
+            reservationUpdates: {
+                type: Boolean,
+                default: true,
+            },
+            announcements: {
+                type: Boolean,
+                default: true,
+            },
+        },
     },
     { timestamps: true }
 );
+
+UserSchema.index({ role: 1, accountStatus: 1 });
 
 UserSchema.pre("save", async function () {
     if (!this.isModified("password")) return;

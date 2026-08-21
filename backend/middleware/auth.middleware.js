@@ -25,6 +25,12 @@ const authMiddleware = async (req, res, next) => {
                 message: "User not found. Unauthorized."
             });
         }
+
+        if (user.accountStatus === "inactive") {
+            return res.status(403).json({
+                message: "This account is inactive. Please contact the barangay administrator."
+            });
+        }
         
         req.user = user;
         next();

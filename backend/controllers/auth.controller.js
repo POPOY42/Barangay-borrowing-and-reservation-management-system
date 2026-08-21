@@ -2,7 +2,7 @@ import User from "../models/User.model.js";
 import Otp from "../models/Otp.model.js";
 
 import sendEmail from "../services/email.service.js";
-import generateOTP from "../utils/generateOTP.js";
+import generateOTP, { getOtpExpiration } from "../utils/generateOTP.js";
 
 import jwt from "jsonwebtoken";
 
@@ -13,7 +13,7 @@ const sendVerificationOTP = async (user) => {
         user: user._id,
         otp,
         type: "email_verification",
-        expiresAt: new Date(Date.now() + 5 * 60 * 1000)
+        expiresAt: getOtpExpiration()
     });
 
     await sendEmail(
@@ -151,8 +151,9 @@ const register = async (req, res) => {
         });
 
     } catch (error) {
+        console.error(error);
         return res.status(500).json({
-            message: error.message
+            message: "Failed to register account."
         });
     }
 };
@@ -221,8 +222,9 @@ const verifyRegisterOTP = async (req, res) => {
         });
 
     } catch (error) {
+        console.error(error);
         return res.status(500).json({
-            message: error.message
+            message: "Failed to verify registration code."
         });
     }
 };
@@ -254,6 +256,12 @@ const login = async (req, res) => {
             });
         }
 
+        if (user.accountStatus === "inactive") {
+            return res.status(403).json({
+                message: "This account is inactive. Please contact the barangay administrator."
+            });
+        }
+
         const token = jwt.sign(
             {
                 id: user._id,
@@ -278,8 +286,9 @@ const login = async (req, res) => {
         });
 
     } catch (error) {
+        console.error(error);
         return res.status(500).json({
-            message: error.message
+            message: "Failed to log in."
         });
     }
 };  
@@ -337,7 +346,7 @@ const forgotPassword = async (req, res) => {
             user: user._id,
             otp,
             type: "forgot_password",
-            expiresAt: new Date(Date.now() + 5 * 60 * 1000)
+            expiresAt: getOtpExpiration()
         });
 
         await sendEmail(
@@ -370,8 +379,9 @@ const forgotPassword = async (req, res) => {
         });
 
     } catch (error) {
+        console.error(error);
         return res.status(500).json({
-            message: error.message
+            message: "Failed to send password reset code."
         });
     }
 };
@@ -452,8 +462,9 @@ const resetPassword = async (req, res) => {
         });
 
     } catch (error) {
+        console.error(error);
         return res.status(500).json({
-            message: error.message
+            message: "Failed to reset password."
         });
     }
 };

@@ -119,7 +119,9 @@ const EditEquipment = () => {
             return "Total quantity must be a whole number that is 0 or greater.";
         }
 
-        const maintenanceQuantity = Number(formValues.maintenanceQuantity);
+        const maintenanceQuantity = Number(
+            formValues.maintenanceQuantity
+        );
 
         if (
             formValues.maintenanceQuantity === "" ||
@@ -127,6 +129,10 @@ const EditEquipment = () => {
             maintenanceQuantity < 0
         ) {
             return "Maintenance quantity must be a whole number that is 0 or greater.";
+        }
+
+        if (maintenanceQuantity > totalQuantity) {
+            return "Maintenance quantity cannot exceed total quantity.";
         }
 
         if (!["active", "inactive"].includes(formValues.status)) {

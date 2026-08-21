@@ -55,6 +55,10 @@ const borrowingSchema = new mongoose.Schema(
     }
 );
 
+borrowingSchema.index({ user: 1, status: 1 });
+borrowingSchema.index({ equipment: 1, status: 1 });
+borrowingSchema.index({ createdAt: -1 });
+
 const Borrowing = mongoose.model("Borrowing", borrowingSchema);
 
 export default Borrowing;

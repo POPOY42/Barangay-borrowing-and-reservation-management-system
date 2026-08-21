@@ -1,0 +1,48 @@
+:root { --resident-green-900: #123d2a; --resident-green-800: #185337; --resident-green-700: #1f6a45; --resident-green-100: #e7f3ec; --resident-green-50: #f5faf7; --resident-text: #173128; --resident-muted: #63756e; --resident-border: #dce7e1; --resident-white: #fff; }
+* { box-sizing: border-box; }
+.resident-layout { min-height: 100vh; background: var(--resident-green-50); color: var(--resident-text); font-family: Arial, Helvetica, sans-serif; overflow-x: hidden; }
+.resident-layout button:not(:disabled), .resident-layout a[href] { cursor: pointer; }
+.resident-layout button:disabled { cursor: not-allowed; }
+.resident-sidebar { position: fixed; inset: 0 auto 0 0; z-index: 40; display: flex; width: 248px; padding: 22px 15px; flex-direction: column; background: linear-gradient(180deg, #123d2a, #174b34); color: #fff; }
+.resident-brand { display: flex; align-items: center; gap: 11px; padding: 3px 8px 22px; border-bottom: 1px solid rgb(255 255 255 / 14%); }
+.resident-brand-mark { display: flex; width: 42px; height: 42px; flex: 0 0 auto; align-items: center; justify-content: center; border-radius: 13px; background: #fff; color: var(--resident-green-800); font-weight: 900; }
+.resident-brand strong, .resident-brand span { display: block; }
+.resident-brand strong { font-size: 0.9rem; }
+.resident-brand div span { margin-top: 3px; color: #b9d2c5; font-size: 0.76rem; }
+.resident-navigation { display: grid; gap: 4px; margin-top: 20px; }
+.resident-navigation-label { margin: 0 11px 7px; color: #91b4a2; font-size: 0.68rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; }
+.resident-nav-link { display: flex; min-height: 43px; align-items: center; gap: 11px; padding: 9px 12px; border-radius: 9px; color: #dbe9e1; font-size: 0.9rem; text-decoration: none; transition: background-color 160ms ease, color 160ms ease; }
+.resident-nav-link svg { width: 18px; height: 18px; flex: 0 0 auto; }
+.resident-nav-link:hover { background: rgb(255 255 255 / 8%); color: #fff; }
+.resident-nav-link.active { background: rgb(130 207 164 / 16%); box-shadow: inset 3px 0 0 #82c9a1; color: #fff; font-weight: 700; }
+.resident-shell { min-height: 100vh; margin-left: 248px; }
+.resident-topbar { position: sticky; top: 0; z-index: 30; display: flex; min-height: 70px; align-items: center; justify-content: flex-end; padding: 0 32px; border-bottom: 1px solid var(--resident-border); background: rgb(255 255 255 / 95%); backdrop-filter: blur(8px); }
+.resident-menu-button { display: none; width: 42px; height: 42px; padding: 0; align-items: center; justify-content: center; border: 1px solid var(--resident-border); border-radius: 10px; background: #fff; color: var(--resident-green-800); }
+.resident-menu-button svg { width: 22px; height: 22px; }
+.resident-account { position: relative; }
+.resident-account-button { display: flex; align-items: center; gap: 10px; padding: 5px 7px 5px 5px; border: 0; border-radius: 11px; background: transparent; color: var(--resident-text); font: inherit; text-align: left; }
+.resident-account-button:hover { background: var(--resident-green-50); }
+.resident-avatar { display: flex; width: 40px; height: 40px; flex: 0 0 auto; align-items: center; justify-content: center; border-radius: 50%; background: var(--resident-green-700); color: #fff; font-size: 0.82rem; font-weight: 900; line-height: 1; }
+.resident-account-details { display: block; min-width: 105px; }
+.resident-account-details strong, .resident-account-details small { display: block; }
+.resident-account-details strong { font-size: 0.88rem; }
+.resident-account-details small { margin-top: 2px; color: var(--resident-muted); font-size: 0.72rem; }
+.resident-account-chevron { width: 16px; height: 16px; color: var(--resident-muted); }
+.resident-account-menu { position: absolute; top: calc(100% + 8px); right: 0; z-index: 50; width: 180px; overflow: hidden; border: 1px solid var(--resident-border); border-radius: 11px; background: #fff; box-shadow: 0 14px 35px rgb(18 61 42 / 16%); }
+.resident-account-menu a, .resident-account-menu button { display: flex; width: 100%; min-height: 43px; align-items: center; gap: 10px; padding: 10px 13px; border: 0; background: transparent; color: var(--resident-text); font: inherit; text-align: left; text-decoration: none; }
+.resident-account-menu a:hover, .resident-account-menu button:hover { background: var(--resident-green-100); }
+.resident-account-menu svg { width: 17px; height: 17px; flex: 0 0 auto; }
+.resident-main { width: 100%; padding: 32px 32px 48px; }
+.resident-page { width: 100%; max-width: none; min-width: 0; margin: 0; }
+.resident-page-heading > span { color: var(--resident-green-700); font-size: 0.72rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; }
+.resident-page-heading h1 { margin: 7px 0 0; font-size: clamp(1.7rem, 4vw, 2.2rem); }
+.resident-page-heading p { margin: 9px 0 0; color: var(--resident-muted); }
+.resident-placeholder-card { margin-top: 24px; padding: 32px; border: 1px solid var(--resident-border); border-radius: 16px; background: #fff; }
+.resident-placeholder-card h2, .resident-placeholder-card p { margin: 0; }
+.resident-placeholder-card p { margin-top: 8px; color: var(--resident-muted); }
+.resident-placeholder-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; margin-top: 22px; }
+.resident-placeholder-grid div { padding: 14px; border-radius: 10px; background: var(--resident-green-50); color: var(--resident-green-800); font-weight: 700; }
+.resident-sidebar-overlay { display: none; }
+@media (max-width: 850px) { .resident-sidebar { width: min(280px, 86vw); transform: translateX(-100%); transition: transform 180ms ease; } .resident-sidebar.is-open { transform: translateX(0); } .resident-sidebar-overlay { position: fixed; inset: 0; z-index: 35; display: block; border: 0; background: rgb(9 32 22 / 52%); } .resident-shell { margin-left: 0; } .resident-topbar { justify-content: space-between; padding: 0 20px; } .resident-menu-button { display: flex; } .resident-main { padding: 26px 20px 40px; } }
+@media (max-width: 480px) { .resident-main { padding: 22px 15px 36px; } .resident-account-details { display: none; } .resident-placeholder-card { padding: 22px 18px; } }
+@media (prefers-reduced-motion: reduce) { .resident-sidebar { transition: none; } }

@@ -15,10 +15,10 @@ import {
     FiClipboard,
     FiFileText,
     FiGrid,
+    FiHome,
     FiList,
     FiPlusSquare,
     FiSettings,
-    FiTag,
     FiUsers,
     FiVolume2,
 } from "react-icons/fi";
@@ -46,6 +46,7 @@ const navigationItems = [
         ],
     },
     { label: "Reservations", path: "/admin/reservations", icon: FiCalendar },
+    { label: "Facilities", path: "/admin/facilities", icon: FiHome },
     {
         key: "equipment",
         label: "Equipment",

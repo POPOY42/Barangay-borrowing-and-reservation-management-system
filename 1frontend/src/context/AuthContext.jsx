@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from "react";
+import { createContext, useCallback, useContext, useState } from "react";
 import { clearAuthData } from "../services/auth";
 
 const AuthContext = createContext(null);
@@ -22,16 +22,27 @@ const getStoredAuth = () => {
 export const AuthProvider = ({ children }) => {
     const [auth, setAuth] = useState(getStoredAuth);
 
-    const loginUser = (token, user) => {
+    const loginUser = useCallback((token, user) => {
         localStorage.setItem("token", token);
         localStorage.setItem("user", JSON.stringify(user));
         setAuth({ token, user });
-    };
+    }, []);
 
-    const logoutUser = () => {
+    const logoutUser = useCallback(() => {
         clearAuthData();
         setAuth({ token: null, user: null });
-    };
+    }, []);
+
+    const updateUser = useCallback((userUpdates) => {
+        setAuth((current) => {
+            if (!current.user) return current;
+
+            const user = { ...current.user, ...userUpdates };
+            localStorage.setItem("user", JSON.stringify(user));
+
+            return { ...current, user };
+        });
+    }, []);
 
     return (
         <AuthContext.Provider
@@ -40,6 +51,7 @@ export const AuthProvider = ({ children }) => {
                 user: auth.user,
                 loginUser,
                 logoutUser,
+                updateUser,
                 isAuthenticated: Boolean(auth.token && auth.user),
             }}
         >
@@ -47,4 +59,6 @@ export const AuthProvider = ({ children }) => {
         </AuthContext.Provider>
     );
 };
+// Auth hooks intentionally share this module with the provider component.
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = () => useContext(AuthContext);

@@ -11,6 +11,68 @@
     color: var(--admin-muted);
 }
 
+.equipment-search {
+    position: relative;
+    width: min(100%, 440px);
+    margin-bottom: 20px;
+}
+
+.equipment-search input {
+    width: 100%;
+    min-height: 44px;
+    padding: 10px 42px;
+    border: 1px solid var(--admin-border);
+    border-radius: 10px;
+    background: var(--admin-white);
+    color: var(--admin-text);
+    font: inherit;
+    outline: none;
+    transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.equipment-search input:focus {
+    border-color: var(--admin-green-700);
+    box-shadow: 0 0 0 3px var(--admin-green-100);
+}
+
+.equipment-search-icon {
+    position: absolute;
+    top: 50%;
+    left: 14px;
+    width: 18px;
+    height: 18px;
+    transform: translateY(-50%);
+    fill: none;
+    stroke: var(--admin-muted);
+    stroke-width: 2;
+    stroke-linecap: round;
+    pointer-events: none;
+}
+
+.equipment-search-clear {
+    position: absolute;
+    top: 50%;
+    right: 8px;
+    display: grid;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    transform: translateY(-50%);
+    place-items: center;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--admin-muted);
+    font: inherit;
+    font-size: 1.35rem;
+    line-height: 1;
+}
+
+.equipment-search-clear:hover {
+    background: var(--admin-green-100);
+    color: var(--admin-green-800);
+}
+
 .equipment-page button:not(:disabled),
 .equipment-page a[href],
 .equipment-image-upload input[type="file"]:not(:disabled),
@@ -463,6 +525,10 @@
 
     .equipment-add-link {
         align-self: flex-start;
+    }
+
+    .equipment-search {
+        width: 100%;
     }
 
     .equipment-pagination {

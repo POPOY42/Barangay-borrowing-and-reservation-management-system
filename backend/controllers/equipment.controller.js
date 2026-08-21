@@ -111,8 +111,34 @@ const createEquipment = async (req, res) => {
 
 const getAllEquipment = async (req, res) => {
     try {
-        const page = Number(req.query.page) || 1;
-        const limit = Number(req.query.limit) || 10;
+        const page = req.query.page === undefined
+            ? 1
+            : Number(req.query.page);
+        const limit = req.query.limit === undefined
+            ? 10
+            : Number(req.query.limit);
+        const search = typeof req.query.search === "string"
+            ? req.query.search.trim()
+            : "";
+        const borrowable = req.user.role === "resident" || req.query.borrowable === "true";
+        const status = typeof req.query.status === "string"
+            ? req.query.status.trim()
+            : "";
+
+        if (
+            req.query.borrowable !== undefined &&
+            !["true", "false"].includes(req.query.borrowable)
+        ) {
+            return res.status(400).json({
+                message: "Borrowable must be either true or false."
+            });
+        }
+
+        if (status && !["active", "inactive"].includes(status)) {
+            return res.status(400).json({
+                message: "Status must be either active or inactive."
+            });
+        }
 
         if (!Number.isInteger(page) || page < 1) {
             return res.status(400).json({
@@ -126,22 +152,78 @@ const getAllEquipment = async (req, res) => {
             });
         }
 
+        const escapedSearch = search.replace(
+            /[.*+?^${}()|[\]\\]/g,
+            "\\$&"
+        );
+        const filter = {};
+
+        if (search) {
+            filter.$or = [
+                { equipmentName: { $regex: escapedSearch, $options: "i" } },
+                { category: { $regex: escapedSearch, $options: "i" } },
+                { description: { $regex: escapedSearch, $options: "i" } }
+            ];
+        }
+
+        if (borrowable) {
+            filter.status = "active";
+            filter.availableQuantity = { $gt: 0 };
+        } else if (status) {
+            filter.status = status;
+        }
         const skip = (page - 1) * limit;
 
         const [equipment, totalItems] = await Promise.all([
-            Equipment.find()
+            Equipment.find(filter)
+                .select(borrowable ? "-imagePublicId" : "")
                 .sort({ createdAt: -1 })
                 .skip(skip)
                 .limit(limit),
 
-            Equipment.countDocuments()
+            Equipment.countDocuments(filter)
         ]);
+
+        let responseEquipment = equipment;
+
+        if (borrowable && req.user.role === "resident" && equipment.length > 0) {
+            const residentBorrowings = await Borrowing.aggregate([
+                {
+                    $match: {
+                        user: req.user._id,
+                        equipment: { $in: equipment.map((item) => item._id) }
+                    }
+                },
+                { $sort: { createdAt: -1, _id: -1 } },
+                {
+                    $group: {
+                        _id: "$equipment",
+                        status: { $first: "$status" }
+                    }
+                }
+            ]);
+
+            const latestStatusByEquipment = new Map();
+
+            residentBorrowings.forEach((borrowing) => {
+                const equipmentId = borrowing._id.toString();
+                if (!latestStatusByEquipment.has(equipmentId)) {
+                    latestStatusByEquipment.set(equipmentId, borrowing.status);
+                }
+            });
+
+            responseEquipment = equipment.map((item) => ({
+                ...item.toObject(),
+                latestBorrowingStatus:
+                    latestStatusByEquipment.get(item._id.toString()) || null
+            }));
+        }
 
         const totalPages = Math.ceil(totalItems / limit);
 
         return res.status(200).json({
             message: "Equipment retrieved successfully.",
-            equipment,
+            equipment: responseEquipment,
             pagination: {
                 currentPage: page,
                 totalPages,
@@ -167,7 +249,15 @@ const getEquipmentById = async (req, res) => {
             });
         }
         
-        const equipment = await Equipment.findById(id);
+        const filter = { _id: id };
+        if (req.user.role === "resident") {
+            filter.status = "active";
+            filter.availableQuantity = { $gt: 0 };
+        }
+
+        const equipment = await Equipment.findOne(filter).select(
+            req.user.role === "resident" ? "-imagePublicId" : ""
+        );
 
         if (!equipment) {
             return res.status(404).json({
@@ -479,7 +569,7 @@ const deleteEquipment = async (req, res) => {
         if (existingBorrowing) {
             return res.status(400).json({
                 message:
-                    "Equipment cannot be deleted because it already has borrowing records."
+                    "Equipment cannot be deleted because it already has borrowing records. Mark it as inactive instead."
             });
         }
 

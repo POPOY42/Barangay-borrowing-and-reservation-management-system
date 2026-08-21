@@ -43,6 +43,8 @@ const Equipment = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(0);
     const [totalItems, setTotalItems] = useState(0);
+    const [search, setSearch] = useState("");
+    const [debouncedSearch, setDebouncedSearch] = useState("");
     const [deletingId, setDeletingId] = useState("");
     const [equipmentToDelete, setEquipmentToDelete] = useState(null);
     const [deleteError, setDeleteError] = useState("");
@@ -59,7 +61,11 @@ const Equipment = () => {
         setError("");
 
         try {
-            const data = await getAllEquipment(currentPage, controller.signal);
+            const data = await getAllEquipment(
+                currentPage,
+                debouncedSearch,
+                controller.signal
+            );
             const pagination = data.pagination ?? {};
 
             setEquipment(Array.isArray(data.equipment) ? data.equipment : []);
@@ -79,7 +85,16 @@ const Equipment = () => {
                 setLoading(false);
             }
         }
-    }, [currentPage]);
+    }, [currentPage, debouncedSearch]);
+
+    useEffect(() => {
+        const debounceTimer = window.setTimeout(() => {
+            setCurrentPage(1);
+            setDebouncedSearch(search.trim());
+        }, 400);
+
+        return () => window.clearTimeout(debounceTimer);
+    }, [search]);
 
     useEffect(() => {
         const fetchTimer = window.setTimeout(fetchEquipment, 0);
@@ -145,6 +160,18 @@ const Equipment = () => {
         }
     };
 
+    const handleSearchChange = (event) => {
+        requestControllerRef.current?.abort();
+        setSearch(event.target.value);
+    };
+
+    const clearSearch = () => {
+        requestControllerRef.current?.abort();
+        setSearch("");
+        setDebouncedSearch("");
+        setCurrentPage(1);
+    };
+
     const handleDelete = async () => {
         if (!equipmentToDelete || deletingId) {
             return;
@@ -186,6 +213,33 @@ const Equipment = () => {
                 </Link>
             </div>
 
+            <div className="equipment-search">
+                <svg
+                    className="equipment-search-icon"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                >
+                    <path d="m21 21-4.35-4.35m2.35-5.65a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z" />
+                </svg>
+                <input
+                    type="search"
+                    value={search}
+                    onChange={handleSearchChange}
+                    placeholder="Search equipment..."
+                    aria-label="Search equipment"
+                />
+                {search && (
+                    <button
+                        type="button"
+                        className="equipment-search-clear"
+                        onClick={clearSearch}
+                        aria-label="Clear equipment search"
+                    >
+                        ×
+                    </button>
+                )}
+            </div>
+
             {loading ? (
                 <div className="equipment-state" role="status">
                     <span className="equipment-loader" aria-hidden="true" />
@@ -201,8 +255,17 @@ const Equipment = () => {
                 </div>
             ) : equipment.length === 0 ? (
                 <div className="equipment-state">
-                    <h2>No equipment found.</h2>
-                    <p>Add equipment to begin building the inventory.</p>
+                    {debouncedSearch ? (
+                        <>
+                            <h2>No equipment found for &quot;{debouncedSearch}&quot;.</h2>
+                            <p>Try a different equipment name, category, or description.</p>
+                        </>
+                    ) : (
+                        <>
+                            <h2>No equipment found.</h2>
+                            <p>Add equipment to begin building the inventory.</p>
+                        </>
+                    )}
                 </div>
             ) : (
                 <div className="equipment-list-card">
