@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import BrandLogo from "../../components/BrandLogo";
 import api from "../../services/api";
 import { useAuth } from "../../context/AuthContext";
 import "../../css/auth/login.css";
@@ -64,9 +65,7 @@ const Login = () => {
                 <div className="login-brand">
                     <div className="login-brand-content">
 
-                        <div className="login-logo">
-                            SR
-                        </div>
+                        <BrandLogo className="login-logo" />
 
                         <p className="login-brand-label">
                             BARANGAY SAN RAFAEL
@@ -99,9 +98,7 @@ const Login = () => {
                     <div className="login-form-container">
 
                         <div className="login-mobile-brand">
-                            <div className="login-mobile-logo">
-                                SR
-                            </div>
+                            <BrandLogo className="login-mobile-logo" />
 
                             <div>
                                 <strong>Barangay San Rafael</strong>

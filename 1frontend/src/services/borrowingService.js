@@ -40,6 +40,7 @@ const cancelBorrowing = async (id) => {
 
 const getAllBorrowings = async ({
     page = 1,
+    limit = 10,
     status = "",
     type = "",
     signal,
@@ -47,7 +48,7 @@ const getAllBorrowings = async ({
     const response = await api.get("/borrowing/all", {
         params: {
             page,
-            limit: 10,
+            limit,
             ...(status ? { status } : {}),
             ...(type ? { type } : {}),
         },

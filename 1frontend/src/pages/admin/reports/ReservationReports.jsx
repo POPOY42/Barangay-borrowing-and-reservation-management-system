@@ -1,10 +1,53 @@
+import { useCallback, useEffect, useState } from "react";
+import AdminPagination from "../../../components/admin/AdminPagination";
+import { getFacilities } from "../../../services/facilityService";
+import { getReservationReport } from "../../../services/reportService";
+import "../../../css/admin/report.css";
+
+const STATUSES = ["pending", "approved", "completed", "rejected", "cancelled"];
+const formatDate = (value) => {
+    if (!value) return "—";
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? "—" : new Intl.DateTimeFormat("en-PH", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }).format(date);
+};
+const formatName = (user) => [user?.firstName, user?.middleName, user?.lastName].filter(Boolean).join(" ") || "Unavailable resident";
+
 const ReservationReports = () => {
-    return (
-        <section className="admin-page">
-            <h1>Reservation Reports</h1>
-            <p>Reservation reports will be added here.</p>
-        </section>
-    );
+    const [filters, setFilters] = useState({ status: "", facility: "", dateFrom: "", dateTo: "" });
+    const [facilities, setFacilities] = useState([]);
+    const [page, setPage] = useState(1);
+    const [records, setRecords] = useState([]);
+    const [summary, setSummary] = useState({});
+    const [pagination, setPagination] = useState({ totalPages: 0, totalItems: 0 });
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
+
+    useEffect(() => {
+        const controller = new AbortController();
+        getFacilities({ page: 1, limit: 100, signal: controller.signal }).then((data) => setFacilities(Array.isArray(data.facilities) ? data.facilities : [])).catch(() => { if (!controller.signal.aborted) setFacilities([]); });
+        return () => controller.abort();
+    }, []);
+
+    const loadReport = useCallback(async (signal) => {
+        setLoading(true); setError("");
+        try {
+            const data = await getReservationReport({ page, ...filters, signal });
+            setRecords(Array.isArray(data.records) ? data.records : []); setSummary(data.summary || {}); setPagination(data.pagination || { totalPages: 0, totalItems: 0 });
+        } catch (requestError) {
+            if (!signal?.aborted) { setRecords([]); setSummary({}); setError(requestError.response?.data?.message || "Unable to load reservation report."); }
+        } finally { if (!signal?.aborted) setLoading(false); }
+    }, [filters, page]);
+
+    useEffect(() => { const controller = new AbortController(); const timer = window.setTimeout(() => loadReport(controller.signal), 0); return () => { window.clearTimeout(timer); controller.abort(); }; }, [loadReport]);
+    const changeFilter = (event) => { const { name, value } = event.target; setFilters((current) => ({ ...current, [name]: value })); setPage(1); };
+    const clearFilters = () => { setFilters({ status: "", facility: "", dateFrom: "", dateTo: "" }); setPage(1); };
+
+    return <section className="admin-page admin-report-page">
+        <header className="admin-report-heading"><h1>Reservation Reports</h1><p>Review facility reservation records and status totals.</p></header>
+        <div className="admin-report-filters"><label>Status<select name="status" value={filters.status} onChange={changeFilter}><option value="">All statuses</option>{STATUSES.map((status) => <option key={status} value={status}>{status[0].toUpperCase() + status.slice(1)}</option>)}</select></label><label>Facility<select name="facility" value={filters.facility} onChange={changeFilter}><option value="">All facilities</option>{facilities.map((facility) => <option key={facility._id} value={facility._id}>{facility.facilityName}</option>)}</select></label><label>Date From<input type="date" name="dateFrom" value={filters.dateFrom} onChange={changeFilter} /></label><label>Date To<input type="date" name="dateTo" value={filters.dateTo} onChange={changeFilter} /></label><button type="button" onClick={clearFilters}>Clear Filters</button></div>
+        {!loading && !error && <div className="admin-report-summary"><article><strong>{summary.total || 0}</strong><span>Total Records</span></article>{STATUSES.map((status) => <article key={status}><strong>{summary[status] || 0}</strong><span>{status[0].toUpperCase() + status.slice(1)}</span></article>)}</div>}
+        <div className="admin-report-panel">{loading ? <div className="admin-report-state" role="status"><span className="admin-report-loader" /><p>Loading reservation report...</p></div> : error ? <div className="admin-report-state" role="alert"><h2>Reservation report could not be loaded</h2><p>{error}</p><button type="button" onClick={() => loadReport()}>Retry</button></div> : records.length === 0 ? <div className="admin-report-state"><h2>No reservation records found.</h2><p>Try changing the report filters.</p></div> : <><div className="admin-report-table-wrap"><table className="admin-report-table"><thead><tr><th>Resident</th><th>Facility</th><th>Date</th><th>Schedule</th><th>Purpose</th><th>Status</th></tr></thead><tbody>{records.map((record) => <tr key={record._id}><td><strong>{formatName(record.user)}</strong><small>{record.user?.email || "—"}</small></td><td><strong>{record.facility?.facilityName || "Unavailable facility"}</strong><small>{record.facility?.location || "—"}</small></td><td>{formatDate(record.reservationDate)}</td><td>{record.startTime || "—"} – {record.endTime || "—"}</td><td>{record.purpose || "—"}</td><td><span className="admin-report-status">{record.status}</span></td></tr>)}</tbody></table></div><AdminPagination currentPage={page} totalPages={pagination.totalPages} totalItems={pagination.totalItems} itemLabel="reservation record" ariaLabel="Reservation report pages" onPageChange={setPage} /></>}</div>
+    </section>;
 };
 
 export default ReservationReports;

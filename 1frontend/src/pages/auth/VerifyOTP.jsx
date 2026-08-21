@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import BrandLogo from "../../components/BrandLogo";
 import api from "../../services/api";
 import "../../css/auth/verifyOTP.css";
 
@@ -107,9 +108,7 @@ const VerifyOTP = () => {
 
                 <div className="otp-brand">
                     <div className="otp-brand-content">
-                        <div className="otp-logo">
-                            SR
-                        </div>
+                        <BrandLogo className="otp-logo" />
 
                         <p className="otp-brand-label">
                             BARANGAY SAN RAFAEL
@@ -143,9 +142,7 @@ const VerifyOTP = () => {
                     <div className="otp-form-container">
 
                         <div className="otp-mobile-brand">
-                            <div className="otp-mobile-logo">
-                                SR
-                            </div>
+                            <BrandLogo className="otp-mobile-logo" />
 
                             <div>
                                 <strong>

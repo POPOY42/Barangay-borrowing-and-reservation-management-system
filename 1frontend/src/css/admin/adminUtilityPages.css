@@ -1,0 +1,14 @@
+.admin-utility-page header p { margin: 8px 0 0; color: var(--admin-muted); }
+.admin-profile-card, .admin-settings-status { margin-top: 24px; padding: 26px; border: 1px solid var(--admin-border); border-radius: 15px; background: #fff; box-shadow: 0 7px 22px rgb(18 61 42 / 5%); }
+.admin-profile-avatar { display: flex; width: 64px; height: 64px; align-items: center; justify-content: center; border-radius: 50%; background: var(--admin-green-700); color: #fff; font-size: 1.15rem; font-weight: 800; }
+.admin-profile-summary { margin-top: 13px; }
+.admin-profile-summary h2 { margin: 0; }
+.admin-profile-summary span { display: block; margin-top: 4px; color: var(--admin-muted); }
+.admin-profile-card dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 22px 0 0; }
+.admin-profile-card dl div { min-width: 0; padding: 13px; border-radius: 9px; background: var(--admin-green-50); }
+.admin-profile-card dt { color: var(--admin-muted); font-size: .73rem; font-weight: 700; text-transform: uppercase; }
+.admin-profile-card dd { overflow-wrap: anywhere; margin: 5px 0 0; }
+.admin-profile-note { margin: 18px 0 0; padding-top: 15px; border-top: 1px solid var(--admin-border); color: var(--admin-muted); font-size: .84rem; }
+.admin-settings-status h2, .admin-settings-status p { margin: 0; }
+.admin-settings-status p { max-width: 700px; margin-top: 8px; color: var(--admin-muted); line-height: 1.6; }
+@media (max-width: 560px) { .admin-profile-card dl { grid-template-columns: 1fr; } .admin-profile-card, .admin-settings-status { padding: 20px; } }

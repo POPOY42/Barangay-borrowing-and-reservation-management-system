@@ -52,12 +52,6 @@
 .borrowing-history-details strong { color: #8a3434; font-size: 0.78rem; }
 .borrowing-history-details span { color: var(--admin-muted); font-size: 0.82rem; line-height: 1.4; }
 
-.borrowing-pagination-footer { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 16px; }
-.borrowing-pagination-footer p { margin: 0; color: var(--admin-muted); font-size: 0.88rem; }
-.borrowing-pagination { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
-.borrowing-pagination button { min-width: 36px; min-height: 36px; padding: 7px 10px; border: 1px solid var(--admin-border); border-radius: 7px; background: var(--admin-white); color: var(--admin-text); font: inherit; }
-.borrowing-pagination button:hover:not(:disabled), .borrowing-pagination button.active { border-color: var(--admin-green-700); background: var(--admin-green-100); }
-.borrowing-pagination span { color: var(--admin-muted); }
 
 .borrowing-lightbox { position: fixed; inset: 0; z-index: 1200; display: grid; padding: 56px 24px 24px; place-items: center; background: rgb(0 0 0 / 76%); cursor: pointer; }
 .borrowing-lightbox-content { display: grid; max-width: 90vw; max-height: calc(100vh - 80px); place-items: center; gap: 12px; cursor: default; }
@@ -81,6 +75,5 @@
 .borrowing-modal-actions .confirm { border: 1px solid var(--admin-green-700); background: var(--admin-green-700); color: var(--admin-white); }
 .borrowing-modal-actions .confirm.reject { border-color: #a63d3d; background: #a63d3d; }
 
-@media (max-width: 700px) { .borrowing-pagination-footer { align-items: flex-start; flex-direction: column; } }
 @media (max-width: 480px) { .borrowing-state { min-height: 220px; padding: 24px 18px; } .borrowing-modal { padding: 22px 18px; } .borrowing-modal-actions { flex-direction: column-reverse; } .borrowing-modal-actions button { width: 100%; } }
 @media (prefers-reduced-motion: reduce) { .borrowing-loader { animation: none; } }

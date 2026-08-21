@@ -4,6 +4,7 @@ import {
     useLocation,
     useNavigate
 } from "react-router-dom";
+import BrandLogo from "../../components/BrandLogo";
 
 import api from "../../services/api";
 import "../../css/auth/forgotPassword.css";
@@ -110,9 +111,7 @@ const ResetPassword = () => {
                 <div className="reset-brand">
                     <div className="reset-brand-content">
 
-                        <div className="reset-brand-logo">
-                            SR
-                        </div>
+                        <BrandLogo className="reset-brand-logo" />
 
                         <p className="reset-brand-label">
                             BARANGAY SAN RAFAEL
@@ -149,9 +148,7 @@ const ResetPassword = () => {
                     <div className="reset-form-container">
 
                         <div className="reset-mobile-brand">
-                            <div className="reset-mobile-logo">
-                                SR
-                            </div>
+                            <BrandLogo className="reset-mobile-logo" />
 
                             <div>
                                 <strong>

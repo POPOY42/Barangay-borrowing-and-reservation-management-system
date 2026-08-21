@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import BrandLogo from "../../components/BrandLogo";
 import api from "../../services/api";
 import "../../css/auth/register.css";
 
@@ -69,9 +70,7 @@ const Register = () => {
 
                 <div className="register-brand">
                     <div className="brand-content">
-                        <div className="barangay-logo">
-                            <span>SR</span>
-                        </div>
+                        <BrandLogo className="barangay-logo" />
 
                         <p className="brand-label">
                             BARANGAY SAN RAFAEL
@@ -136,7 +135,7 @@ const Register = () => {
                     <div className="register-form-container">
 
                         <div className="mobile-brand">
-                            <div className="mobile-logo">SR</div>
+                            <BrandLogo className="mobile-logo" />
 
                             <div>
                                 <strong>Barangay San Rafael</strong>

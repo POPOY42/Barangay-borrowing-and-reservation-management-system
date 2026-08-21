@@ -316,8 +316,7 @@
     color: #8a5a00;
 }
 
-.facility-actions,
-.facility-pagination {
+.facility-actions {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
@@ -325,8 +324,7 @@
 }
 
 .facility-actions a,
-.facility-actions button,
-.facility-pagination button {
+.facility-actions button {
     display: inline-flex;
     min-height: 34px;
     align-items: center;
@@ -343,9 +341,7 @@
     text-decoration: none;
 }
 
-.facility-actions a:hover,
-.facility-pagination button:hover:not(:disabled),
-.facility-pagination button.active {
+.facility-actions a:hover {
     border-color: var(--admin-green-700);
     background: var(--admin-green-700);
     color: var(--admin-white);
@@ -361,35 +357,12 @@
 }
 
 .facility-actions button:disabled,
-.facility-pagination button:disabled,
 .facility-primary-button:disabled,
 .facility-secondary-button:disabled {
     cursor: not-allowed;
     opacity: 0.58;
 }
 
-.facility-pagination-footer {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    padding: 16px;
-    border-top: 1px solid var(--admin-border);
-}
-
-.facility-pagination-footer p {
-    margin: 0;
-    color: var(--admin-muted);
-    font-size: 0.84rem;
-}
-
-.facility-pagination {
-    justify-content: flex-end;
-}
-
-.facility-pagination span {
-    color: var(--admin-muted);
-}
 
 .facility-lightbox,
 .facility-modal-backdrop {
@@ -780,14 +753,6 @@
         width: max-content;
     }
 
-    .facility-pagination-footer {
-        align-items: flex-start;
-        flex-direction: column;
-    }
-
-    .facility-pagination {
-        justify-content: flex-start;
-    }
 }
 
 @media (max-width: 600px) {

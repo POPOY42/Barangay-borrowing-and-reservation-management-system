@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import BrandLogo from "../../components/BrandLogo";
 
 import api from "../../services/api";
 import "../../css/auth/forgotPassword.css";
@@ -39,9 +40,7 @@ const ForgotPassword = () => {
         <main className="forgot-page">
 
             <div className="forgot-card">
-                <div className="forgot-logo">
-                    SR
-                </div>
+                <BrandLogo className="forgot-logo" />
 
                 <p className="forgot-eyebrow">
                     BARANGAY SAN RAFAEL

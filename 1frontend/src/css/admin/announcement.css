@@ -55,12 +55,6 @@
 .admin-announcement-state.error h2, .admin-announcement-state.error p { color: #8b3434; }
 .admin-announcement-loader { width: 34px; height: 34px; border: 4px solid var(--admin-green-100); border-top-color: var(--admin-green-700); border-radius: 50%; animation: admin-announcement-spin 700ms linear infinite; }
 @keyframes admin-announcement-spin { to { transform: rotate(360deg); } }
-.admin-announcement-pagination-footer { display: flex; min-height: 64px; align-items: center; justify-content: space-between; gap: 16px; padding: 11px 14px; border-top: 1px solid var(--admin-border); }
-.admin-announcement-pagination-footer p { margin: 0; color: var(--admin-muted); font-size: 0.8rem; }
-.admin-announcement-pagination { display: flex; align-items: center; gap: 5px; }
-.admin-announcement-pagination button { min-width: 34px; min-height: 34px; padding: 6px 9px; border: 1px solid var(--admin-border); border-radius: 7px; background: #fff; color: var(--admin-text); font: inherit; font-size: 0.78rem; }
-.admin-announcement-pagination button:hover:not(:disabled), .admin-announcement-pagination button.active { border-color: var(--admin-green-700); background: var(--admin-green-700); color: #fff; }
-.admin-announcement-pagination span { padding: 0 3px; color: var(--admin-muted); }
 .admin-announcement-backdrop { position: fixed; inset: 0; z-index: 1200; display: flex; align-items: center; justify-content: center; padding: 22px; overflow-y: auto; background: rgb(8 28 19 / 68%); }
 .admin-announcement-modal { position: relative; width: min(680px, 100%); max-height: calc(100vh - 44px); overflow-y: auto; border: 1px solid var(--admin-border); border-radius: 16px; background: #fff; box-shadow: 0 24px 70px rgb(7 27 18 / 30%); }
 .admin-announcement-close { position: absolute; top: 14px; right: 14px; z-index: 2; display: flex; width: 36px; height: 36px; align-items: center; justify-content: center; padding: 0; border: 1px solid var(--admin-border); border-radius: 9px; background: #fff; color: var(--admin-muted); }
@@ -99,6 +93,6 @@
 .admin-announcement-delete-modal p { margin-top: 8px; color: var(--admin-muted); line-height: 1.5; }
 .admin-announcement-delete-modal > strong { display: block; margin: 10px 0 2px; overflow-wrap: anywhere; }
 .admin-announcement-delete-modal .admin-announcement-modal-actions { justify-content: center; margin-top: 20px; }
-@media (max-width: 720px) { .admin-announcement-header, .admin-announcement-toolbar, .admin-announcement-pagination-footer { align-items: stretch; flex-direction: column; } .admin-announcement-add, .admin-announcement-search, .admin-announcement-filter { width: 100%; } .admin-announcement-filter { min-width: 0; } .admin-announcement-pagination-footer { gap: 10px; } .admin-announcement-pagination { flex-wrap: wrap; } .admin-announcement-details dl { grid-template-columns: 1fr; } }
+@media (max-width: 720px) { .admin-announcement-header, .admin-announcement-toolbar { align-items: stretch; flex-direction: column; } .admin-announcement-add, .admin-announcement-search, .admin-announcement-filter { width: 100%; } .admin-announcement-filter { min-width: 0; } .admin-announcement-details dl { grid-template-columns: 1fr; } }
 @media (max-width: 480px) { .admin-announcement-backdrop { padding: 12px; } .admin-announcement-modal { max-height: calc(100vh - 24px); border-radius: 13px; } .admin-announcement-form-modal, .admin-announcement-details, .admin-announcement-delete-modal { padding: 22px 18px; } .admin-announcement-form-grid { grid-template-columns: 1fr; } .admin-announcement-modal-actions { align-items: stretch; flex-direction: column-reverse; } .admin-announcement-modal-actions button { width: 100%; } }
 @media (prefers-reduced-motion: reduce) { .admin-announcement-loader { animation: none; } }

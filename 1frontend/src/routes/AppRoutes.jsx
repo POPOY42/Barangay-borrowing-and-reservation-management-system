@@ -24,6 +24,15 @@ import EquipmentReports from "../pages/admin/reports/EquipmentReports";
 import Announcements from "../pages/admin/Announcements";
 import Settings from "../pages/admin/Settings";
 import Profile from "../pages/admin/Profile";
+import {
+    About as AdminSettingsAbout,
+    Appearance as AdminSettingsAppearance,
+    ChangePassword as AdminChangePassword,
+    Developers as AdminSettingsDevelopers,
+    FAQ as AdminSettingsFAQ,
+    HowToUse as AdminSettingsHowToUse,
+    Notifications as AdminSettingsNotifications,
+} from "../pages/admin/SettingsSubpages";
 import Facilities from "../pages/admin/Facilities";
 import AddFacility from "../pages/admin/AddFacility";
 import EditFacility from "../pages/admin/EditFacility";
@@ -92,6 +101,13 @@ const AppRoutes = () => {
                 <Route path="reports/equipment" element={<EquipmentReports />}/>
                 <Route path="announcements" element={<Announcements />} />
                 <Route path="settings" element={<Settings />} />
+                <Route path="settings/change-password" element={<AdminChangePassword />} />
+                <Route path="settings/notifications" element={<AdminSettingsNotifications />} />
+                <Route path="settings/appearance" element={<AdminSettingsAppearance />} />
+                <Route path="settings/how-to-use" element={<AdminSettingsHowToUse />} />
+                <Route path="settings/faq" element={<AdminSettingsFAQ />} />
+                <Route path="settings/about" element={<AdminSettingsAbout />} />
+                <Route path="settings/developers" element={<AdminSettingsDevelopers />} />
                 <Route path="profile" element={<Profile />} />
             </Route>
 

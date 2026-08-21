@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { FiBell, FiBook, FiCode, FiEye, FiHelpCircle, FiInfo, FiLock, FiLogOut, FiMail, FiUser, FiX } from "react-icons/fi";
+import BrandLogo from "../../components/BrandLogo";
 import { useAuth } from "../../context/AuthContext";
 import "../../css/resident/residentPages.css";
 import "../../css/resident/settings.css";
@@ -61,7 +62,7 @@ const Settings = () => {
                 <div className="resident-settings-backdrop" onClick={() => setLogoutOpen(false)}>
                     <div className="resident-settings-logout-modal" role="alertdialog" aria-modal="true" aria-labelledby="settings-logout-title" onClick={(event) => event.stopPropagation()}>
                         <button type="button" className="resident-settings-modal-close" aria-label="Close logout confirmation" onClick={() => setLogoutOpen(false)}><FiX aria-hidden="true" /></button>
-                        <span className="resident-settings-logout-icon" aria-hidden="true"><FiLogOut /></span>
+                        <BrandLogo className="resident-settings-logout-icon" />
                         <h2 id="settings-logout-title">Logout</h2>
                         <p>Are you sure you want to sign out?</p>
                         <div className="resident-settings-modal-actions">

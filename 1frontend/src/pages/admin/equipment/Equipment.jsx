@@ -1,40 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import AdminPagination from "../../../components/admin/AdminPagination";
 import {
     deleteEquipment,
     getAllEquipment,
 } from "../../../services/equipmentService";
 import "../../../css/admin/equipment.css";
-
-const getPaginationItems = (currentPage, totalPages) => {
-    if (totalPages <= 7) {
-        return Array.from({ length: totalPages }, (_, index) => index + 1);
-    }
-
-    const pages = new Set([
-        1,
-        totalPages,
-        currentPage - 1,
-        currentPage,
-        currentPage + 1,
-    ]);
-    const visiblePages = [...pages]
-        .filter((page) => page >= 1 && page <= totalPages)
-        .sort((first, second) => first - second);
-    const items = [];
-
-    visiblePages.forEach((page, index) => {
-        const previousPage = visiblePages[index - 1];
-
-        if (previousPage && page - previousPage > 1) {
-            items.push(`ellipsis-${previousPage}`);
-        }
-
-        items.push(page);
-    });
-
-    return items;
-};
 
 const Equipment = () => {
     const [equipment, setEquipment] = useState([]);
@@ -199,8 +170,6 @@ const Equipment = () => {
         }
     };
 
-    const paginationItems = getPaginationItems(currentPage, totalPages);
-
     return (
         <section className="admin-page equipment-page">
             <div className="equipment-page-header">
@@ -361,50 +330,14 @@ const Equipment = () => {
                         </table>
                     </div>
 
-                    <div className="equipment-pagination-footer">
-                        <p>
-                            Showing page {currentPage} of {totalPages} · {totalItems}{" "}
-                            total equipment {totalItems === 1 ? "record" : "records"}
-                        </p>
-
-                        {totalPages > 1 && (
-                            <nav className="equipment-pagination" aria-label="Equipment pages">
-                                <button
-                                    type="button"
-                                    disabled={currentPage === 1}
-                                    onClick={() => setCurrentPage((page) => page - 1)}
-                                >
-                                    Previous
-                                </button>
-
-                                {paginationItems.map((item) =>
-                                    typeof item === "number" ? (
-                                        <button
-                                            type="button"
-                                            key={item}
-                                            className={item === currentPage ? "active" : ""}
-                                            aria-current={item === currentPage ? "page" : undefined}
-                                            onClick={() => setCurrentPage(item)}
-                                        >
-                                            {item}
-                                        </button>
-                                    ) : (
-                                        <span key={item} aria-hidden="true">
-                                            …
-                                        </span>
-                                    )
-                                )}
-
-                                <button
-                                    type="button"
-                                    disabled={currentPage === totalPages}
-                                    onClick={() => setCurrentPage((page) => page + 1)}
-                                >
-                                    Next
-                                </button>
-                            </nav>
-                        )}
-                    </div>
+                    <AdminPagination
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        totalItems={totalItems}
+                        itemLabel="equipment record"
+                        ariaLabel="Equipment pages"
+                        onPageChange={setCurrentPage}
+                    />
                 </div>
             )}
 

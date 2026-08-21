@@ -5,4 +5,9 @@ const getResidentDashboardStats = async (signal) => {
     return response.data;
 };
 
-export { getResidentDashboardStats };
+const getAdminDashboardStats = async (signal) => {
+    const response = await api.get("/dashboard/admin", { signal });
+    return response.data;
+};
+
+export { getAdminDashboardStats, getResidentDashboardStats };

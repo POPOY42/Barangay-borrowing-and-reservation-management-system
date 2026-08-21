@@ -428,51 +428,6 @@
     font-size: 0.78rem;
 }
 
-.admin-reservation-pagination-footer {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    padding: 14px 16px;
-}
-
-.admin-reservation-pagination-footer p {
-    margin: 0;
-    color: var(--admin-muted);
-    font-size: 0.86rem;
-}
-
-.admin-reservation-pagination {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 6px;
-}
-
-.admin-reservation-pagination button {
-    min-width: 36px;
-    min-height: 36px;
-    padding: 7px 10px;
-    border: 1px solid var(--admin-border);
-    border-radius: 7px;
-    background: var(--admin-white);
-    color: var(--admin-text);
-    font: inherit;
-}
-
-.admin-reservation-pagination button:hover:not(:disabled),
-.admin-reservation-pagination button.active {
-    border-color: var(--admin-green-700);
-    background: var(--admin-green-100);
-}
-
-.admin-reservation-pagination button:disabled {
-    opacity: 0.5;
-}
-
-.admin-reservation-pagination span {
-    color: var(--admin-muted);
-}
 
 .admin-reservation-lightbox {
     position: fixed;
@@ -656,10 +611,6 @@
 
 @media (max-width: 760px) {
     .admin-reservation-controls,
-    .admin-reservation-pagination-footer {
-        align-items: flex-start;
-        flex-direction: column;
-    }
 
     .admin-reservation-search {
         width: 100%;

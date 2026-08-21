@@ -13,8 +13,8 @@ const router = express.Router();
 
 router.get("/", authMiddleware, roleMiddleware("resident"), getMyProfile);
 router.patch("/", authMiddleware, roleMiddleware("resident"), updateMyProfile);
-router.patch("/change-password", authMiddleware, roleMiddleware("resident"), changePassword);
-router.get("/notifications", authMiddleware, roleMiddleware("resident"), getNotificationPreferences);
-router.patch("/notifications", authMiddleware, roleMiddleware("resident"), updateNotificationPreferences);
+router.patch("/change-password", authMiddleware, roleMiddleware("resident", "admin"), changePassword);
+router.get("/notifications", authMiddleware, roleMiddleware("resident", "admin"), getNotificationPreferences);
+router.patch("/notifications", authMiddleware, roleMiddleware("resident", "admin"), updateNotificationPreferences);
 
 export default router;

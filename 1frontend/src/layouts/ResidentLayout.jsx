@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import BrandLogo from "../components/BrandLogo";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import {
     FiBell,
@@ -70,7 +71,7 @@ const ResidentLayout = () => {
         <div className="resident-layout">
             <aside id="resident-sidebar" className={`resident-sidebar ${sidebarOpen ? "is-open" : ""}`}>
                 <div className="resident-brand">
-                    <span className="resident-brand-mark">SR</span>
+                    <BrandLogo className="resident-brand-mark" />
                     <div><strong>Barangay San Rafael</strong><span>Resident Portal</span></div>
                 </div>
 

@@ -9,6 +9,7 @@ import {
     FiTrash2,
     FiX,
 } from "react-icons/fi";
+import AdminPagination from "../../components/admin/AdminPagination";
 import {
     createAnnouncement,
     deleteAnnouncement,
@@ -28,24 +29,6 @@ const EMPTY_FORM = {
     content: "",
     priority: "normal",
     status: "published",
-};
-
-const getPaginationItems = (currentPage, totalPages) => {
-    if (totalPages <= 7) {
-        return Array.from({ length: Math.max(totalPages, 1) }, (_, index) => index + 1);
-    }
-    const pages = [...new Set([
-        1, totalPages, currentPage - 2, currentPage - 1,
-        currentPage, currentPage + 1, currentPage + 2,
-    ])]
-        .filter((page) => page >= 1 && page <= totalPages)
-        .sort((a, b) => a - b);
-    const items = [];
-    pages.forEach((page, index) => {
-        if (index > 0 && page - pages[index - 1] > 1) items.push(`ellipsis-${page}`);
-        items.push(page);
-    });
-    return items;
 };
 
 const formatDateTime = (value) => {
@@ -276,8 +259,6 @@ const Announcements = () => {
         setCurrentPage(1);
     };
 
-    const paginationItems = getPaginationItems(currentPage, totalPages);
-
     return (
         <section className="admin-page admin-announcement-page">
             <header className="admin-announcement-header">
@@ -349,16 +330,7 @@ const Announcements = () => {
                 )}
 
                 {!loading && !loadError && announcements.length > 0 && (
-                    <footer className="admin-announcement-pagination-footer">
-                        <p>Page {currentPage} of {Math.max(totalPages, 1)} · {totalItems} announcements</p>
-                        <nav className="admin-announcement-pagination" aria-label="Announcement pages">
-                            <button type="button" disabled={currentPage <= 1} onClick={() => setCurrentPage((page) => page - 1)}>Previous</button>
-                            {paginationItems.map((item) => typeof item === "number" ? (
-                                <button type="button" key={item} className={item === currentPage ? "active" : ""} aria-current={item === currentPage ? "page" : undefined} onClick={() => setCurrentPage(item)}>{item}</button>
-                            ) : <span key={item} aria-hidden="true">…</span>)}
-                            <button type="button" disabled={currentPage >= totalPages} onClick={() => setCurrentPage((page) => page + 1)}>Next</button>
-                        </nav>
-                    </footer>
+                    <AdminPagination currentPage={currentPage} totalPages={totalPages} totalItems={totalItems} itemLabel="announcement" ariaLabel="Announcement pages" onPageChange={setCurrentPage} />
                 )}
             </div>
 

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import BrandLogo from "../components/BrandLogo";
 import {
     NavLink,
     Outlet,
@@ -148,11 +149,9 @@ const AdminLayout = () => {
     }, []);
 
     const handleLogout = () => {
-        setTimeout(() => {
-            setAccountOpen(false);
-            logoutUser();
-            navigate("/login", { replace: true });
-        }, 1200);
+        setAccountOpen(false);
+        logoutUser();
+        navigate("/login", { replace: true });
     };
 
     return (
@@ -162,7 +161,7 @@ const AdminLayout = () => {
                 className={`admin-sidebar ${sidebarOpen ? "is-open" : ""}`}
             >
                 <div className="admin-brand">
-                    <div className="admin-brand-mark">SR</div>
+                    <BrandLogo className="admin-brand-mark" />
                     <div>
                         <strong>Barangay San Rafael</strong>
                         <span>Admin Portal</span>

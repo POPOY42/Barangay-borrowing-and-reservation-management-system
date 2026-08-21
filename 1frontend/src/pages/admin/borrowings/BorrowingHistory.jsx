@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import AdminPagination from "../../../components/admin/AdminPagination";
 import { getAllBorrowings } from "../../../services/borrowingService";
 import "../../../css/admin/borrowing.css";
 
@@ -26,19 +27,6 @@ const residentName = (user) => {
     return [user.firstName, user.middleName, user.lastName]
         .filter(Boolean)
         .join(" ") || user.email || "Unavailable resident";
-};
-
-const getPaginationItems = (current, total) => {
-    if (total <= 7) return Array.from({ length: total }, (_, index) => index + 1);
-    const pages = [...new Set([1, total, current - 1, current, current + 1])]
-        .filter((page) => page >= 1 && page <= total)
-        .sort((a, b) => a - b);
-    return pages.flatMap((page, index) => {
-        const previous = pages[index - 1];
-        return previous && page - previous > 1
-            ? [`ellipsis-${previous}`, page]
-            : [page];
-    });
 };
 
 const BorrowingHistory = () => {
@@ -183,16 +171,7 @@ const BorrowingHistory = () => {
                             ))}</tbody>
                         </table>
                     </div>
-                    <footer className="borrowing-pagination-footer">
-                        <p>Page {currentPage} of {totalPages} · {totalItems} total records</p>
-                        {totalPages > 1 && <nav className="borrowing-pagination" aria-label="Borrowing history pages">
-                            <button type="button" disabled={currentPage === 1} onClick={() => setCurrentPage((page) => page - 1)}>Previous</button>
-                            {getPaginationItems(currentPage, totalPages).map((item) => typeof item === "number" ? (
-                                <button type="button" key={item} className={item === currentPage ? "active" : ""} aria-current={item === currentPage ? "page" : undefined} onClick={() => setCurrentPage(item)}>{item}</button>
-                            ) : <span key={item} aria-hidden="true">…</span>)}
-                            <button type="button" disabled={currentPage === totalPages} onClick={() => setCurrentPage((page) => page + 1)}>Next</button>
-                        </nav>}
-                    </footer>
+                    <AdminPagination currentPage={currentPage} totalPages={totalPages} totalItems={totalItems} itemLabel="borrowing record" ariaLabel="Borrowing history pages" onPageChange={setCurrentPage} />
                 </div>
             )}
 

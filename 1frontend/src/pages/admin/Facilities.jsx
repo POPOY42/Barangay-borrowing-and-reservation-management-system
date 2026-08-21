@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import AdminPagination from "../../components/admin/AdminPagination";
 import {
     FiAlertTriangle,
     FiEdit2,
@@ -22,35 +23,6 @@ const STATUS_OPTIONS = [
     { value: "inactive", label: "Inactive" },
     { value: "maintenance", label: "Maintenance" },
 ];
-
-const getPaginationItems = (currentPage, totalPages) => {
-    if (totalPages <= 7) {
-        return Array.from({ length: totalPages }, (_, index) => index + 1);
-    }
-
-    const pages = new Set([
-        1,
-        totalPages,
-        currentPage - 2,
-        currentPage - 1,
-        currentPage,
-        currentPage + 1,
-        currentPage + 2,
-    ]);
-    const visiblePages = [...pages]
-        .filter((page) => page >= 1 && page <= totalPages)
-        .sort((a, b) => a - b);
-    const items = [];
-
-    visiblePages.forEach((page, index) => {
-        if (index > 0 && page - visiblePages[index - 1] > 1) {
-            items.push(`ellipsis-${page}`);
-        }
-        items.push(page);
-    });
-
-    return items;
-};
 
 const FacilityThumbnail = ({ facility, onOpen }) => {
     const [failed, setFailed] = useState(false);
@@ -218,7 +190,6 @@ const Facilities = () => {
         }
     };
 
-    const paginationItems = getPaginationItems(currentPage, totalPages);
     const hasActiveFilters = Boolean(debouncedSearch || status);
 
     return (
@@ -360,42 +331,14 @@ const Facilities = () => {
                         </table>
                     </div>
 
-                    <div className="facility-pagination-footer">
-                        <p>
-                            Showing page {currentPage} of {totalPages} · {totalItems} total {totalItems === 1 ? "facility" : "facilities"}
-                        </p>
-                        <nav className="facility-pagination" aria-label="Facility pages">
-                            <button
-                                type="button"
-                                disabled={currentPage <= 1}
-                                onClick={() => setCurrentPage((page) => page - 1)}
-                            >
-                                Previous
-                            </button>
-                            {paginationItems.map((item) =>
-                                typeof item === "number" ? (
-                                    <button
-                                        type="button"
-                                        key={item}
-                                        className={item === currentPage ? "active" : ""}
-                                        aria-current={item === currentPage ? "page" : undefined}
-                                        onClick={() => setCurrentPage(item)}
-                                    >
-                                        {item}
-                                    </button>
-                                ) : (
-                                    <span key={item} aria-hidden="true">…</span>
-                                )
-                            )}
-                            <button
-                                type="button"
-                                disabled={currentPage >= totalPages}
-                                onClick={() => setCurrentPage((page) => page + 1)}
-                            >
-                                Next
-                            </button>
-                        </nav>
-                    </div>
+                    <AdminPagination
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        totalItems={totalItems}
+                        itemLabel="facility"
+                        ariaLabel="Facility pages"
+                        onPageChange={setCurrentPage}
+                    />
                 </div>
             )}
 
