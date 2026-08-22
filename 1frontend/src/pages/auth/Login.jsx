@@ -41,13 +41,11 @@ const Login = () => {
             const { token, user } = response.data;
             loginUser(token, user);
 
-            setTimeout(() => {
-                if (user.role === "admin") {
-                    navigate("/admin/dashboard");
-                } else {
-                    navigate("/resident/dashboard");
-                }
-            }, 1200);
+            if (user.role === "admin") {
+                navigate("/admin/dashboard");
+            } else {
+                navigate("/resident/dashboard");
+            }
         } catch (error) {
             setError(
                 error.response?.data?.message ||
