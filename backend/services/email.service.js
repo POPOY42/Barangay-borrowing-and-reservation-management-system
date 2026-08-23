@@ -1,4 +1,4 @@
-import { Resend } from "resend";
+import { BrevoClient } from "@getbrevo/brevo";
 
 class EmailDeliveryError extends Error {
     constructor(message = "Email delivery failed.") {
@@ -8,34 +8,36 @@ class EmailDeliveryError extends Error {
     }
 }
 
-const createEmailSender = (client, fromAddress) => async (to, subject, html) => {
-    if (!fromAddress) {
-        console.error("Email delivery configuration error: EMAIL_FROM is missing.");
+const createEmailSender = (client, senderEmail, senderName) => async (to, subject, html) => {
+    if (!senderEmail || !senderName) {
+        console.error("Email delivery configuration error: sender details are missing.", {
+            emailFromConfigured: Boolean(senderEmail),
+            emailFromNameConfigured: Boolean(senderName),
+        });
         throw new EmailDeliveryError();
     }
 
     try {
-        const { data, error } = await client.emails.send({
-            from: fromAddress,
-            to: [to],
+        const result = await client.transactionalEmails.sendTransacEmail({
+            sender: {
+                email: senderEmail,
+                name: senderName,
+            },
+            to: [{ email: to }],
             subject,
-            html,
+            htmlContent: html,
         });
 
-        if (error || !data?.id) {
-            console.error("Resend rejected an email request.", {
-                name: error?.name,
-                message: error?.message,
-                statusCode: error?.statusCode,
-            });
+        if (!result?.messageId) {
+            console.error("Brevo accepted an email request without returning a message ID.");
             throw new EmailDeliveryError();
         }
 
-        return data;
+        return result;
     } catch (error) {
         if (error instanceof EmailDeliveryError) throw error;
 
-        console.error("Resend email request failed.", {
+        console.error("Brevo email request failed.", {
             name: error?.name,
             message: error?.message,
             statusCode: error?.statusCode,
@@ -45,13 +47,22 @@ const createEmailSender = (client, fromAddress) => async (to, subject, html) => 
 };
 
 const sendEmail = async (to, subject, html) => {
-    if (!process.env.RESEND_API_KEY) {
-        console.error("Email delivery configuration error: RESEND_API_KEY is missing.");
+    if (!process.env.BREVO_API_KEY) {
+        console.error("Email delivery configuration error: BREVO_API_KEY is missing.");
         throw new EmailDeliveryError();
     }
 
-    const client = new Resend(process.env.RESEND_API_KEY);
-    return createEmailSender(client, process.env.EMAIL_FROM)(to, subject, html);
+    const client = new BrevoClient({
+        apiKey: process.env.BREVO_API_KEY,
+        timeoutInSeconds: 15,
+        maxRetries: 2,
+    });
+
+    return createEmailSender(
+        client,
+        process.env.EMAIL_FROM,
+        process.env.EMAIL_FROM_NAME,
+    )(to, subject, html);
 };
 
 export { createEmailSender, EmailDeliveryError };

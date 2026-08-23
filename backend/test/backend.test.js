@@ -88,19 +88,20 @@ test("reservation and announcement models reject unsupported statuses", async ()
     await assert.rejects(announcement.validate(), /status/);
 });
 
-test("email sender returns the provider message after Resend accepts it", async () => {
+test("email sender returns the provider message after Brevo accepts it", async () => {
     let request;
     const client = {
-        emails: {
-            send: async (payload) => {
+        transactionalEmails: {
+            sendTransacEmail: async (payload) => {
                 request = payload;
-                return { data: { id: "email_123" }, error: null };
+                return { messageId: "<email_123@relay.brevo.com>" };
             },
         },
     };
     const sendEmail = createEmailSender(
         client,
-        "Barangay San Rafael <onboarding@resend.dev>",
+        "barangay.borrowing.system@gmail.com",
+        "Barangay San Rafael",
     );
 
     const result = await sendEmail(
@@ -109,31 +110,33 @@ test("email sender returns the provider message after Resend accepts it", async 
         "<p>123456</p>",
     );
 
-    assert.equal(result.id, "email_123");
+    assert.equal(result.messageId, "<email_123@relay.brevo.com>");
     assert.deepEqual(request, {
-        from: "Barangay San Rafael <onboarding@resend.dev>",
-        to: ["resident@example.com"],
+        sender: {
+            email: "barangay.borrowing.system@gmail.com",
+            name: "Barangay San Rafael",
+        },
+        to: [{ email: "resident@example.com" }],
         subject: "Verification code",
-        html: "<p>123456</p>",
+        htmlContent: "<p>123456</p>",
     });
 });
 
-test("email sender throws when Resend rejects the request", async () => {
+test("email sender throws when Brevo rejects the request", async () => {
     const client = {
-        emails: {
-            send: async () => ({
-                data: null,
-                error: {
-                    name: "validation_error",
-                    message: "Rejected",
-                    statusCode: 422,
-                },
-            }),
+        transactionalEmails: {
+            sendTransacEmail: async () => {
+                const error = new Error("Rejected");
+                error.name = "UnprocessableEntityError";
+                error.statusCode = 422;
+                throw error;
+            },
         },
     };
     const sendEmail = createEmailSender(
         client,
-        "Barangay San Rafael <onboarding@resend.dev>",
+        "barangay.borrowing.system@gmail.com",
+        "Barangay San Rafael",
     );
 
     await assert.rejects(sendEmail("resident@example.com", "Subject", "<p>Body</p>"), {
@@ -141,20 +144,37 @@ test("email sender throws when Resend rejects the request", async () => {
     });
 });
 
-test("email sender rejects missing sender configuration before calling Resend", async () => {
+test("email sender rejects missing sender configuration before calling Brevo", async () => {
     let called = false;
     const client = {
-        emails: {
-            send: async () => {
+        transactionalEmails: {
+            sendTransacEmail: async () => {
                 called = true;
-                return { data: { id: "email_123" }, error: null };
+                return { messageId: "<email_123@relay.brevo.com>" };
             },
         },
     };
-    const sendEmail = createEmailSender(client, "");
+    const sendEmail = createEmailSender(client, "", "Barangay San Rafael");
 
     await assert.rejects(sendEmail("resident@example.com", "Subject", "<p>Body</p>"), {
         code: "EMAIL_DELIVERY_FAILED",
     });
     assert.equal(called, false);
+});
+
+test("email sender throws when Brevo does not return a message ID", async () => {
+    const client = {
+        transactionalEmails: {
+            sendTransacEmail: async () => ({}),
+        },
+    };
+    const sendEmail = createEmailSender(
+        client,
+        "barangay.borrowing.system@gmail.com",
+        "Barangay San Rafael",
+    );
+
+    await assert.rejects(sendEmail("resident@example.com", "Subject", "<p>Body</p>"), {
+        code: "EMAIL_DELIVERY_FAILED",
+    });
 });
