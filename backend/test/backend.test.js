@@ -4,6 +4,7 @@ import Announcement from "../models/Announcement.model.js";
 import Facility from "../models/Facility.model.js";
 import Reservation from "../models/Reservation.model.js";
 import { validateSchedule } from "../controllers/reservation.controller.js";
+import { createEmailSender } from "../services/email.service.js";
 import { escapeRegex, parsePagination } from "../utils/queryHelpers.js";
 
 const futureDate = () => {
@@ -85,4 +86,75 @@ test("reservation and announcement models reject unsupported statuses", async ()
 
     await assert.rejects(reservation.validate(), /status/);
     await assert.rejects(announcement.validate(), /status/);
+});
+
+test("email sender returns the provider message after Resend accepts it", async () => {
+    let request;
+    const client = {
+        emails: {
+            send: async (payload) => {
+                request = payload;
+                return { data: { id: "email_123" }, error: null };
+            },
+        },
+    };
+    const sendEmail = createEmailSender(
+        client,
+        "Barangay San Rafael <onboarding@resend.dev>",
+    );
+
+    const result = await sendEmail(
+        "resident@example.com",
+        "Verification code",
+        "<p>123456</p>",
+    );
+
+    assert.equal(result.id, "email_123");
+    assert.deepEqual(request, {
+        from: "Barangay San Rafael <onboarding@resend.dev>",
+        to: ["resident@example.com"],
+        subject: "Verification code",
+        html: "<p>123456</p>",
+    });
+});
+
+test("email sender throws when Resend rejects the request", async () => {
+    const client = {
+        emails: {
+            send: async () => ({
+                data: null,
+                error: {
+                    name: "validation_error",
+                    message: "Rejected",
+                    statusCode: 422,
+                },
+            }),
+        },
+    };
+    const sendEmail = createEmailSender(
+        client,
+        "Barangay San Rafael <onboarding@resend.dev>",
+    );
+
+    await assert.rejects(sendEmail("resident@example.com", "Subject", "<p>Body</p>"), {
+        code: "EMAIL_DELIVERY_FAILED",
+    });
+});
+
+test("email sender rejects missing sender configuration before calling Resend", async () => {
+    let called = false;
+    const client = {
+        emails: {
+            send: async () => {
+                called = true;
+                return { data: { id: "email_123" }, error: null };
+            },
+        },
+    };
+    const sendEmail = createEmailSender(client, "");
+
+    await assert.rejects(sendEmail("resident@example.com", "Subject", "<p>Body</p>"), {
+        code: "EMAIL_DELIVERY_FAILED",
+    });
+    assert.equal(called, false);
 });

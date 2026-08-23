@@ -9,26 +9,36 @@ import jwt from "jsonwebtoken";
 const sendVerificationOTP = async (user) => {
     const otp = generateOTP();
 
-    await Otp.create({
+    const otpRecord = await Otp.create({
         user: user._id,
         otp,
         type: "email_verification",
         expiresAt: getOtpExpiration()
     });
 
-    await sendEmail(
-        user.email,
-        "Email Verification",
-        `
-            <h2>Barangay San Rafael</h2>
-            <p>Borrowing and Reservation Management System</p>
-            <p>Your verification code is:</p>
-            <h1>${otp}</h1>
-            <p>This code will expire in <b>5 minutes</b>.</p>
-            <hr>
-            <p>If you did not request this, please ignore this email.</p>
-        `
-    );
+    try {
+        await sendEmail(
+            user.email,
+            "Barangay San Rafael email verification",
+            `
+                <h2>Barangay San Rafael</h2>
+                <p>Borrowing and Reservation Management System</p>
+                <p>Your email verification code is:</p>
+                <h1>${otp}</h1>
+                <p>This code will expire in <b>5 minutes</b>.</p>
+                <hr>
+                <p>If you did not request this, please ignore this email.</p>
+            `
+        );
+    } catch (error) {
+        await Otp.deleteOne({ _id: otpRecord._id }).catch((cleanupError) => {
+            console.error("Failed to clean up an undelivered verification OTP.", {
+                name: cleanupError?.name,
+                message: cleanupError?.message,
+            });
+        });
+        throw error;
+    }
 };
 
 const register = async (req, res) => {
@@ -152,6 +162,11 @@ const register = async (req, res) => {
 
     } catch (error) {
         console.error(error);
+        if (error?.code === "EMAIL_DELIVERY_FAILED") {
+            return res.status(503).json({
+                message: "Unable to send verification email. Please try again."
+            });
+        }
         return res.status(500).json({
             message: "Failed to register account."
         });
@@ -341,38 +356,36 @@ const forgotPassword = async (req, res) => {
         }
 
         const otp = generateOTP();
-
-        await Otp.create({
+        const otpRecord = await Otp.create({
             user: user._id,
             otp,
             type: "forgot_password",
             expiresAt: getOtpExpiration()
         });
 
-        await sendEmail(
-            user.email,
-            "Password Reset",
-            `
-                <h2>Barangay San Rafael</h2>
-                <p>Borrowing and Reservation Management System</p>
-
-                <p>Your password reset code is:</p>
-
-                <h1>${otp}</h1>
-
-                <p>
-                    This code will expire in
-                    <b>5 minutes</b>.
-                </p>
-
-                <hr>
-
-                <p>
-                    If you did not request a password reset,
-                    please ignore this email.
-                </p>
-            `
-        );
+        try {
+            await sendEmail(
+                user.email,
+                "Barangay San Rafael password recovery code",
+                `
+                    <h2>Barangay San Rafael</h2>
+                    <p>Borrowing and Reservation Management System</p>
+                    <p>Your password recovery code is:</p>
+                    <h1>${otp}</h1>
+                    <p>This code will expire in <b>5 minutes</b>.</p>
+                    <hr>
+                    <p>If you did not request a password reset, please ignore this email.</p>
+                `
+            );
+        } catch (error) {
+            await Otp.deleteOne({ _id: otpRecord._id }).catch((cleanupError) => {
+                console.error("Failed to clean up an undelivered password-reset OTP.", {
+                    name: cleanupError?.name,
+                    message: cleanupError?.message,
+                });
+            });
+            throw error;
+        }
 
         return res.status(200).json({
             message: "Password reset code has been sent to your email."
@@ -380,6 +393,11 @@ const forgotPassword = async (req, res) => {
 
     } catch (error) {
         console.error(error);
+        if (error?.code === "EMAIL_DELIVERY_FAILED") {
+            return res.status(503).json({
+                message: "Unable to send password reset email. Please try again."
+            });
+        }
         return res.status(500).json({
             message: "Failed to send password reset code."
         });
